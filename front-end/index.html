@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INOVANERD - Universo Anime</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts: Bebas Neue (display) + Barlow (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════
+       NAVBAR
+  ═══════════════════════════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="#" class="nav-logo" onclick="showPage('home')">
+        <div class="logo-mark">
+          <span class="logo-icon"><img src="imagens/logo-1000x1000.png" alt="" class="logo-icon"></span>
+          <span class="logo-text">INOVA<span class="logo-accent">NERD</span></span>
+        </div>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#" class="nav-link active" data-page="home" onclick="showPage('home')">Home</a></li>
+        <li><a href="#" class="nav-link" data-page="catalog" onclick="showPage('catalog')">Produtos</a></li>
+        <li>
+          <a href="#" class="nav-link cart-link" data-page="cart" onclick="showPage('cart')">
+            <span class="cart-icon">🛒</span>
+            Carrinho
+            <span class="cart-badge" id="cartBadge">0</span>
+          </a>
+        </li>
+      </ul>
+
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       HOME PAGE
+  ═══════════════════════════════════════════ -->
+  <div id="page-home" class="page active">
+
+    <!-- HERO BANNER -->
+    <section class="hero">
+      <div class="hero-bg-grid"></div>
+      <div class="hero-particles" id="heroParticles"></div>
+      <div class="hero-content">
+        <div class="hero-badge">✦ Nova Coleção 2025</div>
+        <h1 class="hero-title">
+          SEU UNIVERSO<br/>
+          <span class="hero-title-accent">ANIME</span><br/>
+          COMEÇA AQUI
+        </h1>
+        <p class="hero-subtitle">
+          Camisetas exclusivas e bonecos colecionáveis dos seus animes favoritos.<br/>
+          Arte que você pode usar — e exibir.
+        </p>
+        <div class="hero-cta">
+          <button class="btn btn-primary" onclick="showPage('catalog')">Ver Coleção</button>
+          <button class="btn btn-outline" onclick="scrollToSection('bestsellers')">Mais Vendidos</button>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="hero-carousel" aria-label="Destaques da coleção">
+          <div class="carousel-glow"></div>
+          <div class="carousel-frame">
+            <div class="carousel-track" id="heroCarouselTrack">
+              <figure class="carousel-slide">
+                <img src="imagens/SaveClip.App_541845344_17924621127101886_4256484301558237946_n.jpg" alt="Primeiro produto em destaque da coleção INOVANERD" />
+                <figcaption class="carousel-caption">
+                  <span>Drop Exclusivo</span>
+                  <strong>Arte premium pronta para coleção</strong>
+                </figcaption>
+              </figure>
+              <figure class="carousel-slide">
+                <img src="imagens/SaveClip.App_541692725_17924621136101886_7263608657061485053_n.jpg" alt="Segundo produto em destaque da coleção INOVANERD" />
+                <figcaption class="carousel-caption">
+                  <span>Nova Peça</span>
+                  <strong>Visual intenso com estética otaku</strong>
+                </figcaption>
+              </figure>
+            </div>
+          </div>
+          <button class="carousel-nav carousel-prev" type="button" onclick="moveHeroCarousel(-1)" aria-label="Slide anterior">‹</button>
+          <button class="carousel-nav carousel-next" type="button" onclick="moveHeroCarousel(1)" aria-label="Próximo slide">›</button>
+          <div class="carousel-dots" aria-label="Selecionar slide">
+            <button class="carousel-dot active" type="button" onclick="setHeroCarousel(0)" aria-label="Ir para o slide 1"></button>
+            <button class="carousel-dot" type="button" onclick="setHeroCarousel(1)" aria-label="Ir para o slide 2"></button>
+          </div>
+        </div>
+        <div class="hero-orb hero-orb-1"></div>
+        <div class="hero-orb hero-orb-2"></div>
+      </div>
+      <script src="script.js"></script>
+    </section>
+
+    <!-- CATEGORIES STRIP -->
+    <section class="categories-strip">
+      <div class="container">
+        <div class="categories-grid">
+          <div class="category-card" onclick="filterAndGo('camisetas')">
+            <div class="cat-icon">👕</div>
+            <div class="cat-info">
+              <h3>Camisetas</h3>
+              <p>Exclusivas & Originais</p>
+            </div>
+            <div class="cat-arrow">→</div>
+          </div>
+          <div class="category-card" onclick="filterAndGo('bonecos')">
+            <div class="cat-icon">🏆</div>
+            <div class="cat-info">
+              <h3>Bonecos Colecionáveis</h3>
+              <p>Edições Limitadas</p>
+            </div>
+            <div class="cat-arrow">→</div>
+          </div>
+          <div class="category-card" onclick="filterAndGo('todos')">
+            <div class="cat-icon">⭐</div>
+            <div class="cat-info">
+              <h3>Ver Tudo</h3>
+              <p>Catálogo completo</p>
+            </div>
+            <div class="cat-arrow">→</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FEATURED PRODUCTS -->
+    <section class="section" id="featured">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">Em destaque</div>
+          <h2 class="section-title">NOVIDADES DA SEMANA</h2>
+          <p class="section-sub">Os lançamentos que estão bombando no universo otaku</p>
+        </div>
+        <div class="products-grid" id="featuredGrid">
+          <!-- Preenchido pelo JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- BESTSELLERS -->
+    <section class="section section-dark" id="bestsellers">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-tag">🔥 Hot</div>
+          <h2 class="section-title">MAIS VENDIDOS</h2>
+          <p class="section-sub">Os favoritos da nossa comunidade</p>
+        </div>
+        <div class="products-grid" id="bestsellersGrid">
+          <!-- Preenchido pelo JS -->
+        </div>
+        <div class="section-cta">
+          <button class="btn btn-primary" onclick="showPage('catalog')">Ver Catálogo Completo</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- BANNER CTA -->
+    <section class="banner-cta">
+      <div class="banner-cta-bg"></div>
+      <div class="container">
+        <div class="banner-cta-content">
+          <div class="banner-cta-text">
+            <h2>FRETE GRÁTIS <span class="accent">ACIMA DE R$ 199</span></h2>
+            <p>Entregamos para todo o Brasil. Embalagem especial para colecionáveis.</p>
+          </div>
+          <div class="banner-cta-badges">
+            <div class="badge-item">🚚 Frete Grátis</div>
+            <div class="badge-item">🔒 Compra Segura</div>
+            <div class="badge-item">🔄 Troca Fácil</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-home -->
+
+  <!-- ═══════════════════════════════════════════
+       CATALOG PAGE
+  ═══════════════════════════════════════════ -->
+  <div id="page-catalog" class="page">
+    <div class="page-hero-mini">
+      <div class="container">
+        <h1 class="page-title">CATÁLOGO</h1>
+        <p>Explore nossa coleção completa</p>
+      </div>
+    </div>
+
+    <div class="container catalog-layout">
+      <!-- Sidebar / Filters -->
+      <aside class="filters-sidebar">
+        <div class="filter-block">
+          <h3 class="filter-title">Categoria</h3>
+          <div class="filter-options">
+            <label class="filter-opt">
+              <input type="radio" name="cat" value="todos" checked onchange="applyFilters()" /> Todos
+            </label>
+            <label class="filter-opt">
+              <input type="radio" name="cat" value="camisetas" onchange="applyFilters()" /> Camisetas
+            </label>
+            <label class="filter-opt">
+              <input type="radio" name="cat" value="bonecos" onchange="applyFilters()" /> Bonecos
+            </label>
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <h3 class="filter-title">Anime</h3>
+          <div class="filter-options" id="animeFilterOptions">
+            <!-- Preenchido pelo JS -->
+          </div>
+        </div>
+
+        <div class="filter-block">
+          <h3 class="filter-title">Preço</h3>
+          <div class="price-range">
+            <input type="range" id="priceRange" min="0" max="500" value="500" oninput="updatePriceFilter(this.value)" />
+            <div class="price-labels">
+              <span>R$ 0</span>
+              <span id="priceMax">R$ 500</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-outline btn-sm" onclick="resetFilters()">Limpar Filtros</button>
+      </aside>
+
+      <!-- Products Area -->
+      <div class="catalog-main">
+        <div class="catalog-toolbar">
+          <span class="results-count" id="resultsCount">0 produtos encontrados</span>
+          <div class="sort-wrap">
+            <select class="sort-select" onchange="applyFilters()">
+              <option value="default">Ordenar por</option>
+              <option value="price-asc">Menor preço</option>
+              <option value="price-desc">Maior preço</option>
+              <option value="name">Nome A-Z</option>
+            </select>
+          </div>
+        </div>
+        <div class="products-grid" id="catalogGrid">
+          <!-- Preenchido pelo JS -->
+        </div>
+        <div class="empty-state" id="emptyState" style="display:none">
+          <div class="empty-icon">🔍</div>
+          <h3>Nenhum produto encontrado</h3>
+          <p>Tente ajustar os filtros</p>
+          <button class="btn btn-primary" onclick="resetFilters()">Ver Todos</button>
+        </div>
+      </div>
+    </div>
+  </div><!-- /page-catalog -->
+
+  <!-- ═══════════════════════════════════════════
+       PRODUCT PAGE
+  ═══════════════════════════════════════════ -->
+  <div id="page-product" class="page">
+    <div class="container">
+      <button class="back-btn" id="productBackBtn" onclick="goBack()">← Voltar</button>
+      <div class="product-detail" id="productDetail">
+        <!-- Preenchido pelo JS -->
+      </div>
+      <section class="related-section">
+        <div class="section-header">
+          <h2 class="section-title">VOCÊ TAMBÉM VAI GOSTAR</h2>
+        </div>
+        <div class="products-grid" id="relatedGrid"></div>
+      </section>
+    </div>
+  </div><!-- /page-product -->
+
+  <!-- ═══════════════════════════════════════════
+       CART PAGE
+  ═══════════════════════════════════════════ -->
+  <div id="page-cart" class="page">
+    <div class="page-hero-mini">
+      <div class="container">
+        <h1 class="page-title">CARRINHO</h1>
+        <p>Revise seus itens antes de finalizar</p>
+      </div>
+    </div>
+    <div class="container cart-layout">
+      <div class="cart-items-wrap" id="cartItemsWrap">
+        <!-- Preenchido pelo JS -->
+      </div>
+      <aside class="cart-summary" id="cartSummary">
+        <!-- Preenchido pelo JS -->
+      </aside>
+    </div>
+  </div><!-- /page-cart -->
+
+  <!-- ═══════════════════════════════════════════
+       CHECKOUT MODAL
+  ═══════════════════════════════════════════ -->
+  <div class="modal-overlay" id="checkoutModal" onclick="closeModal(event)">
+    <div class="modal">
+      <button class="modal-close" onclick="closeCheckout()">✕</button>
+      <div id="checkoutContent">
+        <!-- Preenchido pelo JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer-top">
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <div class="logo-mark">
+              <span class="logo-icon"><img src="imagens/logo-1000x1000.png" alt="" class="logo-img"></span>
+              <span class="logo-text">INOVA<span class="logo-accent">NERD</span></span>
+            </div>
+            <p>O seu destino para produtos de anime de qualidade. Arte, paixão e cultura otaku em cada produto.</p>
+            <div class="social-links">
+              <a href="#" class="social-link" title="Instagram">📸</a>
+              <a href="#" class="social-link" title="Twitter/X">🐦</a>
+              <a href="#" class="social-link" title="TikTok">🎵</a>
+              <a href="#" class="social-link" title="YouTube">▶️</a>
+              <a href="#" class="social-link" title="Discord">💬</a>
+            </div>
+          </div>
+
+          <div class="footer-links-col">
+            <h4>Navegação</h4>
+            <ul>
+              <li><a href="#" onclick="showPage('home')">Home</a></li>
+              <li><a href="#" onclick="showPage('catalog')">Catálogo</a></li>
+              <li><a href="#" onclick="filterAndGo('camisetas')">Camisetas</a></li>
+              <li><a href="#" onclick="filterAndGo('bonecos')">Bonecos</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-links-col">
+            <h4>Informações</h4>
+            <ul>
+              <li><a href="#">Sobre Nós</a></li>
+              <li><a href="#">Política de Troca</a></li>
+              <li><a href="#">FAQ</a></li>
+              <li><a href="#">Rastrear Pedido</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-links-col">
+            <h4>Contato</h4>
+            <ul>
+              <li>📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="e98a86879d889d86a9869d88829c9f8c9b9a8cc78a8684c78b9b">[email&#160;protected]</a></li>
+              <li>📞 (62) 99999-8888</li>
+              <li>📍 Goiânia, GO — Brasil</li>
+              <li>⏰ Seg–Sex: 9h–18h</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <p>© 2025 INOVANERD. Todos os direitos reservados.</p>
+        <p>Desenvolvido com ❤️ 
