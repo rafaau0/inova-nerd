@@ -1,0 +1,256 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ═══════════════════════════════════════════════════════════
+   INOVANERD — Design Tokens
+   Paleta: Roxo #4B2E83 | Laranja #F59E0B | Dark #0F172A
+═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* Core Colors */
+  --purple: #4B2E83;
+  --purple-light: #6B42B8;
+  --purple-dark: #321d5c;
+  --orange: #F59E0B;
+  --orange-light: #FBC02D;
+  --orange-dark: #D97706;
+  
+  /* Background */
+  --background: #0F172A;
+  --foreground: #F8FAFC;
+  
+  /* Card */
+  --card: #1E293B;
+  --card-foreground: #F8FAFC;
+  
+  /* Muted */
+  --muted: #162032;
+  --muted-foreground: #94A3B8;
+  
+  /* Border */
+  --border: rgba(75, 46, 131, 0.35);
+  
+  /* Primary (Orange) */
+  --primary: #F59E0B;
+  --primary-foreground: #0F172A;
+  
+  /* Secondary (Purple) */
+  --secondary: #4B2E83;
+  --secondary-foreground: #F8FAFC;
+  
+  /* Accent */
+  --accent: #162032;
+  --accent-foreground: #F8FAFC;
+  
+  /* Destructive */
+  --destructive: #EF4444;
+  --destructive-foreground: #F8FAFC;
+  
+  /* Input */
+  --input: rgba(75, 46, 131, 0.35);
+  --ring: #F59E0B;
+  
+  /* Radius */
+  --radius: 0.875rem;
+  
+  /* Popover */
+  --popover: #1E293B;
+  --popover-foreground: #F8FAFC;
+}
+
+@theme inline {
+  --font-sans: 'Barlow', sans-serif;
+  --font-mono: 'Geist Mono', monospace;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-condensed: 'Barlow Condensed', sans-serif;
+  
+  /* Colors */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  
+  /* Custom Brand Colors */
+  --color-purple: var(--purple);
+  --color-purple-light: var(--purple-light);
+  --color-purple-dark: var(--purple-dark);
+  --color-orange: var(--orange);
+  --color-orange-light: var(--orange-light);
+  --color-orange-dark: var(--orange-dark);
+  
+  /* Radius */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  
+  img {
+    max-width: 100%;
+    display: block;
+  }
+}
+
+@layer utilities {
+  /* Font utilities */
+  .font-display {
+    font-family: var(--font-display);
+  }
+  
+  .font-condensed {
+    font-family: var(--font-condensed);
+  }
+  
+  /* Text stroke for hero */
+  .stroke-orange {
+    -webkit-text-stroke: 3px var(--orange);
+  }
+  
+  .stroke-3 {
+    -webkit-text-stroke-width: 3px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════════════════ */
+
+@keyframes gridShift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(60px); }
+}
+
+@keyframes float {
+  0% { 
+    transform: translateY(100vh) scale(0); 
+    opacity: 0; 
+  }
+  10% { opacity: 0.7; }
+  90% { opacity: 0.7; }
+  100% { 
+    transform: translateY(-50px) scale(1); 
+    opacity: 0; 
+  }
+}
+
+@keyframes heroIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(40px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes heroVisualFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(-0.6deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(0.6deg);
+  }
+}
+
+@keyframes cardIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Animation classes */
+.animate-hero-in {
+  animation: heroIn 0.9s ease both;
+}
+
+.animate-float {
+  animation: float var(--dur, 6s) linear var(--delay, 0s) infinite;
+}
+
+.animate-float-slow {
+  animation: heroVisualFloat 6s ease-in-out infinite;
+}
+
+.animate-card-in {
+  animation: cardIn 0.5s ease both;
+}
+
+.animate-shake {
+  animation: shake 0.4s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SCROLLBAR
+═══════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--purple);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--purple-light);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   SELECTION
+═══════════════════════════════════════════════════════════ */
+
+::selection {
+  background: var(--orange);
+  color: var(--background);
+}
