@@ -75,7 +75,7 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
   id BIGSERIAL PRIMARY KEY,
   order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-  product_id BIGINT NOT NULL REFERENCES products(id),
+  product_id BIGINT NOT NULL,
   product_name TEXT NOT NULL,
   variant TEXT,
   qty INTEGER NOT NULL,

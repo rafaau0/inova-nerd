@@ -49,6 +49,7 @@ Para producao, use `.env.production.example` como referencia.
 - `npm run build`
 - `npm run lint`
 - `npm test`
+- `npm run db:migrate:json`
 
 ## Estrutura de dados local
 
@@ -64,7 +65,7 @@ Para producao, use `.env.production.example` como referencia.
 - O projeto agora ja possui uma camada de adaptador de dados pronta para receber banco.
 - O provedor atual e controlado por `DATA_PROVIDER`.
 - `DATA_PROVIDER=json` usa os arquivos em `data/`.
-- `DATA_PROVIDER=database` ja aponta para um adaptador de banco preparado, mas ainda nao implementado.
+- `DATA_PROVIDER=database` agora usa `Supabase/Postgres` via `DATABASE_URL`.
 - O schema inicial sugerido esta em [db/schema.sql](/C:/Users/RAFAEL/Documents/PROGRAMAÇÃO/DEV-INOVANERD/db/schema.sql).
 - O guia da migracao esta em [db/README.md](/C:/Users/RAFAEL/Documents/PROGRAMAÇÃO/DEV-INOVANERD/db/README.md).
 
