@@ -25,6 +25,8 @@ Crie um `.env.local` baseado em `.env.example`:
 ```env
 MP_ACCESS_TOKEN=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+DATA_PROVIDER=json
+DATABASE_URL=postgres://user:password@localhost:5432/inovanerd
 CORREIOS_ACCESS_TOKEN=COLE_O_TOKEN_DA_API_PRECO
 CORREIOS_ORIGIN_CEP=75700000
 CORREIOS_SERVICE_CODE=03220
@@ -59,7 +61,12 @@ Para producao, use `.env.production.example` como referencia.
 ## Observacoes
 
 - O painel admin usa persistencia local em JSON, ideal para desenvolvimento, demos e prototipos.
-- Para producao real, o proximo passo natural e migrar `data/` para banco de dados.
+- O projeto agora ja possui uma camada de adaptador de dados pronta para receber banco.
+- O provedor atual e controlado por `DATA_PROVIDER`.
+- `DATA_PROVIDER=json` usa os arquivos em `data/`.
+- `DATA_PROVIDER=database` ja aponta para um adaptador de banco preparado, mas ainda nao implementado.
+- O schema inicial sugerido esta em [db/schema.sql](/C:/Users/RAFAEL/Documents/PROGRAMAÇÃO/DEV-INOVANERD/db/schema.sql).
+- O guia da migracao esta em [db/README.md](/C:/Users/RAFAEL/Documents/PROGRAMAÇÃO/DEV-INOVANERD/db/README.md).
 
 ## Deploy
 

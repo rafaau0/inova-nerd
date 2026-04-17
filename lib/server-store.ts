@@ -1,8 +1,7 @@
 import 'server-only'
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import path from 'node:path'
 import { getShippingQuote } from './shipping-server'
+import { getDataStore } from './data'
 import type {
   AuthUser,
   CreateCouponPayload,
@@ -15,37 +14,14 @@ import type {
   UserRecord,
 } from './types'
 
-const dataDir = process.env.INOVANERD_DATA_DIR || path.join(process.cwd(), 'data')
-const productsFile = path.join(dataDir, 'products.json')
-const couponsFile = path.join(dataDir, 'coupons.json')
-const ordersFile = path.join(dataDir, 'orders.json')
-const usersFile = path.join(dataDir, 'users.json')
-const sessionsFile = path.join(dataDir, 'sessions.json')
-
-async function ensureDataDir() {
-  await mkdir(dataDir, { recursive: true })
-}
-
-async function readJsonFile<T>(filePath: string, fallback: T): Promise<T> {
-  try {
-    const raw = await readFile(filePath, 'utf-8')
-    return JSON.parse(raw) as T
-  } catch {
-    return fallback
-  }
-}
-
-async function writeJsonFile<T>(filePath: string, data: T) {
-  await ensureDataDir()
-  await writeFile(filePath, JSON.stringify(data, null, 2), 'utf-8')
-}
+const store = getDataStore()
 
 export async function readProducts(): Promise<Product[]> {
-  return readJsonFile<Product[]>(productsFile, [])
+  return store.readProducts()
 }
 
 export async function writeProducts(products: Product[]) {
-  await writeJsonFile(productsFile, products)
+  await store.writeProducts(products)
 }
 
 export async function upsertProduct(product: Product) {
@@ -71,11 +47,11 @@ export async function getNextProductId() {
 }
 
 export async function readCoupons(): Promise<CouponDefinition[]> {
-  return readJsonFile<CouponDefinition[]>(couponsFile, [])
+  return store.readCoupons()
 }
 
 export async function writeCoupons(coupons: CouponDefinition[]) {
-  await writeJsonFile(couponsFile, coupons)
+  await store.writeCoupons(coupons)
 }
 
 export async function upsertCoupon(coupon: CreateCouponPayload) {
@@ -106,11 +82,11 @@ export async function deleteCoupon(code: string) {
 }
 
 export async function readOrders(): Promise<OrderRecord[]> {
-  return readJsonFile<OrderRecord[]>(ordersFile, [])
+  return store.readOrders()
 }
 
 export async function writeOrders(orders: OrderRecord[]) {
-  await writeJsonFile(ordersFile, orders)
+  await store.writeOrders(orders)
 }
 
 export async function updateOrderPayment(
@@ -137,11 +113,11 @@ export async function updateOrderPayment(
 }
 
 export async function readUsers(): Promise<UserRecord[]> {
-  return readJsonFile<UserRecord[]>(usersFile, [])
+  return store.readUsers()
 }
 
 export async function writeUsers(users: UserRecord[]) {
-  await writeJsonFile(usersFile, users)
+  await store.writeUsers(users)
 }
 
 export async function createUser(user: UserRecord) {
@@ -161,11 +137,11 @@ export async function findUserById(userId: string) {
 }
 
 export async function readSessions(): Promise<SessionRecord[]> {
-  return readJsonFile<SessionRecord[]>(sessionsFile, [])
+  return store.readSessions()
 }
 
 export async function writeSessions(sessions: SessionRecord[]) {
-  await writeJsonFile(sessionsFile, sessions)
+  await store.writeSessions(sessions)
 }
 
 export async function createSession(session: SessionRecord) {
