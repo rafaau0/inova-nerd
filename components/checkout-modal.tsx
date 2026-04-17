@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { track } from '@vercel/analytics'
 import { CreditCard, FileText, QrCode, X } from 'lucide-react'
 import { useCart } from './cart-provider'
@@ -11,6 +11,19 @@ import type { CustomerInfo, PaymentMethod } from '@/lib/types'
 interface CheckoutModalProps {
   isOpen: boolean
   onClose: () => void
+}
+
+interface CepLookupResponse {
+  success: boolean
+  error?: string
+  data?: {
+    cep: string
+    endereco: string
+    complemento: string
+    bairro: string
+    cidade: string
+    estado: string
+  }
 }
 
 const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
@@ -70,6 +83,8 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [step, setStep] = useState(1)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit_card')
   const [isProcessing, setIsProcessing] = useState(false)
+  const [isLoadingCep, setIsLoadingCep] = useState(false)
+  const [cepError, setCepError] = useState<string | null>(null)
   const modalRef = useRef<HTMLDivElement>(null)
 
   const [customer, setCustomer] = useState<CustomerInfo>({
@@ -81,6 +96,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     endereco: '',
     numero: '',
     complemento: '',
+    bairro: '',
     cidade: '',
     estado: '',
   })
@@ -96,6 +112,8 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setStep(1)
     setPaymentMethod('credit_card')
     setIsProcessing(false)
+    setIsLoadingCep(false)
+    setCepError(null)
     setShippingDestination(null)
     setCard({
       numero: '',
@@ -104,6 +122,78 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       nome: '',
     })
   }
+
+  useEffect(() => {
+    const cepDigits = customer.cep.replace(/\D/g, '')
+
+    if (cepDigits.length !== 8) {
+      return
+    }
+
+    let cancelled = false
+
+    const lookupCep = async () => {
+      setIsLoadingCep(true)
+      setCepError(null)
+
+      try {
+        const response = await fetch(`/api/address/cep/${cepDigits}`)
+        const result = (await response.json()) as CepLookupResponse
+
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(result.error || 'Nao foi possivel localizar o CEP.')
+        }
+
+        if (cancelled) return
+
+        setCustomer((prev) => ({
+          ...prev,
+          cep: result.data?.cep || prev.cep,
+          endereco: result.data?.endereco || prev.endereco,
+          complemento: prev.complemento || result.data?.complemento || '',
+          bairro: result.data?.bairro || '',
+          cidade: result.data?.cidade || prev.cidade,
+          estado: result.data?.estado || prev.estado,
+        }))
+
+        setShippingDestination({
+          cep: result.data.cep,
+          cidade: result.data.cidade,
+          estado: result.data.estado,
+        })
+      } catch (error) {
+        if (cancelled) return
+
+        setCepError(
+          error instanceof Error ? error.message : 'Nao foi possivel localizar o CEP.'
+        )
+        setShippingDestination(null)
+      } finally {
+        if (!cancelled) {
+          setIsLoadingCep(false)
+        }
+      }
+    }
+
+    void lookupCep()
+
+    return () => {
+      cancelled = true
+    }
+  }, [customer.cep, setShippingDestination])
+
+  useEffect(() => {
+    if (customer.cidade && customer.estado) {
+      setShippingDestination({
+        cep: customer.cep,
+        cidade: customer.cidade,
+        estado: customer.estado,
+      })
+      return
+    }
+
+    setShippingDestination(null)
+  }, [customer.cidade, customer.estado, customer.cep, setShippingDestination])
 
   const handleBackdropClick = (event: React.MouseEvent) => {
     if (event.target === modalRef.current) {
@@ -314,11 +404,25 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 <input
                   type="text"
                   value={customer.cep}
-                  onChange={(event) => setCustomer({ ...customer, cep: maskCEP(event.target.value) })}
+                  onChange={(event) => {
+                    setCepError(null)
+                    setCustomer({ ...customer, cep: maskCEP(event.target.value) })
+                  }}
                   placeholder="00000-000"
                   maxLength={9}
                   className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
                 />
+                <div className="mt-1 text-xs">
+                  {isLoadingCep && <span className="text-muted-foreground">Buscando endereco...</span>}
+                  {!isLoadingCep && cepError && <span className="text-red-500">{cepError}</span>}
+                  {!isLoadingCep &&
+                    !cepError &&
+                    hasResolvedShippingDestination(customer) && (
+                      <span className="text-green-500">
+                        Endereco localizado. Frete atualizado para {customer.cidade}/{customer.estado}.
+                      </span>
+                    )}
+                </div>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -344,6 +448,17 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">Bairro</label>
+                <input
+                  type="text"
+                  value={customer.bairro}
+                  onChange={(event) => setCustomer({ ...customer, bairro: event.target.value })}
+                  placeholder="Seu bairro"
+                  className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
+                />
               </div>
 
               <div>
