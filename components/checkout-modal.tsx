@@ -5,6 +5,7 @@ import { track } from '@vercel/analytics'
 import { CreditCard, FileText, QrCode, X } from 'lucide-react'
 import { useCart } from './cart-provider'
 import { useToast } from './toast-provider'
+import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
 import type { CustomerInfo, PaymentMethod } from '@/lib/types'
 
 interface CheckoutModalProps {
@@ -64,7 +65,7 @@ const paymentOptions: Array<{
 ]
 
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
-  const { cart, coupon, totals, clearCart } = useCart()
+  const { cart, coupon, totals, clearCart, setShippingDestination } = useCart()
   const { showToast } = useToast()
   const [step, setStep] = useState(1)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit_card')
@@ -95,6 +96,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setStep(1)
     setPaymentMethod('credit_card')
     setIsProcessing(false)
+    setShippingDestination(null)
     setCard({
       numero: '',
       validade: '',
@@ -166,6 +168,11 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
   const goToStep2 = () => {
     if (validateStep1()) {
+      setShippingDestination({
+        cidade: customer.cidade,
+        estado: customer.estado,
+        cep: customer.cep,
+      })
       setStep(2)
     }
   }
@@ -496,6 +503,13 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     {totals.frete === 0 ? 'GRATIS' : `R$ ${totals.frete.toFixed(2).replace('.', ',')}`}
                   </span>
                 </div>
+                {hasResolvedShippingDestination(customer) && (
+                  <div className="text-xs text-muted-foreground mb-2">
+                    {isCatalaoGoias(customer)
+                      ? 'Frete gratis aplicado para entregas em Catalao/GO.'
+                      : `Frete calculado para ${customer.cidade}/${customer.estado}.`}
+                  </div>
+                )}
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-border mt-2">
                   <span className="text-foreground">Total</span>
                   <span className="text-orange">R$ {totals.total.toFixed(2).replace('.', ',')}</span>

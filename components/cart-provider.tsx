@@ -8,7 +8,7 @@ import {
   useCallback,
   type ReactNode,
 } from 'react'
-import type { CartItem, Coupon, Product } from '@/lib/types'
+import type { CartItem, Coupon, Product, ShippingDestination } from '@/lib/types'
 import {
   loadCart,
   saveCart,
@@ -31,6 +31,7 @@ interface CartContextType {
   cart: CartItem[]
   coupon: Coupon | null
   wishlist: number[]
+  shippingDestination: ShippingDestination | null
   cartCount: number
   totals: ReturnType<typeof getCartTotals>
   addToCart: (product: Product, qty?: number, size?: string | null) => void
@@ -39,6 +40,7 @@ interface CartContextType {
   applyCoupon: (code: string) => Promise<CouponResult>
   removeCoupon: () => void
   clearCart: () => void
+  setShippingDestination: (destination: ShippingDestination | null) => void
   toggleWishlist: (id: number) => void
   isInWishlist: (id: number) => boolean
 }
@@ -49,6 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>(() => loadCart())
   const [coupon, setCoupon] = useState<Coupon | null>(null)
   const [wishlist, setWishlist] = useState<number[]>(() => loadWishlist())
+  const [shippingDestination, setShippingDestination] = useState<ShippingDestination | null>(null)
 
   useEffect(() => {
     saveCart(cart)
@@ -116,6 +119,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setCart([])
     setCoupon(null)
+    setShippingDestination(null)
   }, [])
 
   const toggleWishlist = useCallback((id: number) => {
@@ -125,7 +129,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const isInWishlist = useCallback((id: number) => wishlist.includes(id), [wishlist])
 
   const cartCount = getCartCount(cart)
-  const totals = getCartTotals(cart, coupon)
+  const totals = getCartTotals(cart, coupon, shippingDestination ?? undefined)
 
   return (
     <CartContext.Provider
@@ -133,6 +137,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cart,
         coupon,
         wishlist,
+        shippingDestination,
         cartCount,
         totals,
         addToCart,
@@ -141,6 +146,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         applyCoupon,
         removeCoupon,
         clearCart,
+        setShippingDestination,
         toggleWishlist,
         isInWishlist,
       }}

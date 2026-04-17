@@ -89,6 +89,12 @@ export interface CustomerInfo {
   estado: string
 }
 
+export interface ShippingDestination {
+  cidade?: string
+  estado?: string
+  cep?: string
+}
+
 export interface CreateOrderPayload {
   items: OrderItem[]
   coupon: string | null

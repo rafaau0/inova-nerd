@@ -7,9 +7,19 @@ import { Lock, Minus, Plus, ShoppingCart, Tag, Trash2 } from 'lucide-react'
 import { useCart } from '@/components/cart-provider'
 import { useToast } from '@/components/toast-provider'
 import { CheckoutModal } from '@/components/checkout-modal'
+import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
 
 export default function CartPage() {
-  const { cart, coupon, totals, removeFromCart, updateQty, applyCoupon, removeCoupon } = useCart()
+  const {
+    cart,
+    coupon,
+    totals,
+    shippingDestination,
+    removeFromCart,
+    updateQty,
+    applyCoupon,
+    removeCoupon,
+  } = useCart()
   const { showToast } = useToast()
   const [couponInput, setCouponInput] = useState('')
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
@@ -166,8 +176,24 @@ export default function CartPage() {
 
                 {totals.frete > 0 && (
                   <div className="text-xs text-muted-foreground">
+                    {hasResolvedShippingDestination(shippingDestination ?? undefined)
+                      ? `Frete calculado para ${shippingDestination?.cidade}/${shippingDestination?.estado}.`
+                      : 'Frete estimado. Informe a cidade e o estado no checkout para calcular o valor real.'}
+                  </div>
+                )}
+
+                {totals.frete === 0 &&
+                  hasResolvedShippingDestination(shippingDestination ?? undefined) &&
+                  isCatalaoGoias(shippingDestination ?? undefined) && (
+                    <div className="text-xs text-green-500">
+                      Entrega em Catalao/GO com frete gratis.
+                    </div>
+                  )}
+
+                {totals.frete > 0 && totals.subtotal < 199 && (
+                  <div className="text-xs text-muted-foreground">
                     Falta R$ {(199 - totals.subtotal).toFixed(2).replace('.', ',')} para frete
-                    gratis.
+                    gratis por valor do pedido.
                   </div>
                 )}
               </div>

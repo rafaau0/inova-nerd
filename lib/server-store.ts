@@ -2,6 +2,7 @@ import 'server-only'
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
+import { calculateShipping } from './shipping'
 import type {
   AuthUser,
   CreateCouponPayload,
@@ -274,7 +275,11 @@ export async function createOrder(payload: CreateOrderPayload & { userId?: strin
   const createdAt = new Date().toISOString()
   const desconto = appliedCoupon ? subtotalBruto * (appliedCoupon.pct / 100) : 0
   const subtotal = subtotalBruto - desconto
-  const frete = subtotal >= 199 ? 0 : 19.9
+  const frete = calculateShipping(subtotal, {
+    cidade: payload.customer.cidade,
+    estado: payload.customer.estado,
+    cep: payload.customer.cep,
+  })
   const total = subtotal + frete
 
   const updatedProducts = products.map((product) => {

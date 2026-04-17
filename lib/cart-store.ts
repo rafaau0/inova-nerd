@@ -1,4 +1,5 @@
-import type { CartItem, CartTotals, Product } from './types'
+import { calculateShipping } from './shipping'
+import type { CartItem, CartTotals, Product, ShippingDestination } from './types'
 
 const CART_KEY = 'inovanerd_cart'
 const WISHLIST_KEY = 'inovanerd_wishlist'
@@ -81,12 +82,13 @@ export function updateCartQty(cart: CartItem[], key: string, delta: number): Car
 
 export function getCartTotals(
   cart: CartItem[],
-  coupon: { pct: number } | null
+  coupon: { pct: number } | null,
+  destination?: ShippingDestination
 ): CartTotals {
   const subtotalBruto = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
   const desconto = coupon ? subtotalBruto * (coupon.pct / 100) : 0
   const subtotal = subtotalBruto - desconto
-  const frete = subtotal >= 199 ? 0 : 19.9
+  const frete = calculateShipping(subtotal, destination)
   const total = subtotal + frete
 
   return { subtotalBruto, desconto, subtotal, frete, total }
