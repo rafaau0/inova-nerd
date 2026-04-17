@@ -1,26 +1,5 @@
 import { NextResponse } from 'next/server'
-
-// ═══════════════════════════════════════════════════════════
-// POST /api/coupons/validate
-// Valida um cupom de desconto
-// 
-// TODO (backend): Conectar com banco de dados
-// const { data, error } = await supabase
-//   .from('coupons')
-//   .select('*')
-//   .eq('code', code.toUpperCase())
-//   .eq('active', true)
-//   .gte('expires_at', new Date().toISOString())
-//   .single()
-// ═══════════════════════════════════════════════════════════
-
-// Cupons validos (mover para banco de dados em producao)
-const VALID_COUPONS: Record<string, { pct: number; minValue?: number; maxUses?: number }> = {
-  'OTAKU10': { pct: 10 },
-  'ANIME20': { pct: 20, minValue: 150 },
-  'VERSE15': { pct: 15 },
-  'PRIMEIRA': { pct: 10 }, // Cupom para primeira compra
-}
+import { readCoupons } from '@/lib/server-store'
 
 export async function POST(request: Request) {
   try {
@@ -28,47 +7,53 @@ export async function POST(request: Request) {
 
     if (!code) {
       return NextResponse.json(
-        { success: false, error: 'Codigo do cupom e obrigatorio' },
+        { success: false, error: 'Codigo do cupom e obrigatorio.' },
         { status: 400 }
       )
     }
 
-    const upperCode = code.trim().toUpperCase()
-    const coupon = VALID_COUPONS[upperCode]
+    const upperCode = String(code).trim().toUpperCase()
+    const coupons = await readCoupons()
+    const coupon = coupons.find((item) => item.code === upperCode)
 
-    if (!coupon) {
+    if (!coupon || !coupon.active) {
       return NextResponse.json(
-        { success: false, error: 'Cupom invalido ou expirado' },
+        { success: false, error: 'Cupom invalido ou inativo.' },
         { status: 404 }
       )
     }
 
-    // Verifica valor minimo
-    if (coupon.minValue && cartTotal && cartTotal < coupon.minValue) {
+    if (coupon.minValue && Number(cartTotal) < coupon.minValue) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Valor minimo para este cupom: R$ ${coupon.minValue.toFixed(2).replace('.', ',')}` 
+        {
+          success: false,
+          error: `Valor minimo para este cupom: R$ ${coupon.minValue
+            .toFixed(2)
+            .replace('.', ',')}`,
         },
         { status: 400 }
       )
     }
 
-    // TODO: Verificar se o cupom ja foi usado pelo usuario
-    // TODO: Verificar limite de usos do cupom
+    if (coupon.maxUses && coupon.uses >= coupon.maxUses) {
+      return NextResponse.json(
+        { success: false, error: 'Cupom esgotado.' },
+        { status: 400 }
+      )
+    }
 
     return NextResponse.json({
       success: true,
       data: {
-        code: upperCode,
+        code: coupon.code,
         pct: coupon.pct,
-        minValue: coupon.minValue || null,
+        minValue: coupon.minValue,
       },
     })
   } catch (error) {
     console.error('Error validating coupon:', error)
     return NextResponse.json(
-      { success: false, error: 'Erro ao validar cupom' },
+      { success: false, error: 'Erro ao validar cupom.' },
       { status: 500 }
     )
   }

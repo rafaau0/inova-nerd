@@ -1,6 +1,13 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  type ReactNode,
+} from 'react'
 import type { CartItem, Coupon, Product } from '@/lib/types'
 import {
   loadCart,
@@ -10,11 +17,15 @@ import {
   updateCartQty as updateCartQtyFn,
   getCartTotals,
   getCartCount,
-  validateCoupon,
   loadWishlist,
   saveWishlist,
   toggleWishlistItem,
 } from '@/lib/cart-store'
+
+interface CouponResult {
+  ok: boolean
+  error?: string
+}
 
 interface CartContextType {
   cart: CartItem[]
@@ -25,7 +36,7 @@ interface CartContextType {
   addToCart: (product: Product, qty?: number, size?: string | null) => void
   removeFromCart: (key: string) => void
   updateQty: (key: string, delta: number) => void
-  applyCoupon: (code: string) => boolean
+  applyCoupon: (code: string) => Promise<CouponResult>
   removeCoupon: () => void
   clearCart: () => void
   toggleWishlist: (id: number) => void
@@ -35,52 +46,68 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>([])
+  const [cart, setCart] = useState<CartItem[]>(() => loadCart())
   const [coupon, setCoupon] = useState<Coupon | null>(null)
-  const [wishlist, setWishlist] = useState<number[]>([])
-  const [isHydrated, setIsHydrated] = useState(false)
+  const [wishlist, setWishlist] = useState<number[]>(() => loadWishlist())
 
-  // Hidrata o estado do localStorage
   useEffect(() => {
-    setCart(loadCart())
-    setWishlist(loadWishlist())
-    setIsHydrated(true)
-  }, [])
+    saveCart(cart)
+  }, [cart])
 
-  // Persiste carrinho
   useEffect(() => {
-    if (isHydrated) {
-      saveCart(cart)
-    }
-  }, [cart, isHydrated])
-
-  // Persiste wishlist
-  useEffect(() => {
-    if (isHydrated) {
-      saveWishlist(wishlist)
-    }
-  }, [wishlist, isHydrated])
+    saveWishlist(wishlist)
+  }, [wishlist])
 
   const addToCart = useCallback((product: Product, qty = 1, size: string | null = null) => {
-    setCart(prev => addToCartFn(prev, product, qty, size))
+    setCart((prev) => addToCartFn(prev, product, qty, size))
   }, [])
 
   const removeFromCart = useCallback((key: string) => {
-    setCart(prev => removeFromCartFn(prev, key))
+    setCart((prev) => removeFromCartFn(prev, key))
   }, [])
 
   const updateQty = useCallback((key: string, delta: number) => {
-    setCart(prev => updateCartQtyFn(prev, key, delta))
+    setCart((prev) => updateCartQtyFn(prev, key, delta))
   }, [])
 
-  const applyCoupon = useCallback((code: string): boolean => {
-    const validCoupon = validateCoupon(code)
-    if (validCoupon) {
-      setCoupon(validCoupon)
-      return true
-    }
-    return false
-  }, [])
+  const applyCoupon = useCallback(
+    async (code: string): Promise<CouponResult> => {
+      try {
+        const response = await fetch('/api/coupons/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code,
+            cartTotal: getCartTotals(cart, null).subtotalBruto,
+          }),
+        })
+
+        const result = (await response.json()) as {
+          success: boolean
+          error?: string
+          data?: Coupon
+        }
+
+        if (!response.ok || !result.success || !result.data) {
+          return {
+            ok: false,
+            error: result.error || 'Nao foi possivel validar o cupom.',
+          }
+        }
+
+        setCoupon(result.data)
+        return { ok: true }
+      } catch {
+        return {
+          ok: false,
+          error: 'Falha ao validar cupom no momento.',
+        }
+      }
+    },
+    [cart]
+  )
 
   const removeCoupon = useCallback(() => {
     setCoupon(null)
@@ -92,7 +119,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const toggleWishlist = useCallback((id: number) => {
-    setWishlist(prev => toggleWishlistItem(prev, id))
+    setWishlist((prev) => toggleWishlistItem(prev, id))
   }, [])
 
   const isInWishlist = useCallback((id: number) => wishlist.includes(id), [wishlist])
@@ -125,8 +152,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext)
+
   if (!context) {
     throw new Error('useCart deve ser usado dentro de CartProvider')
   }
+
   return context
 }

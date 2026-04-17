@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Trash2, Minus, Plus, ShoppingCart, Lock, Tag } from 'lucide-react'
+import { Lock, Minus, Plus, ShoppingCart, Tag, Trash2 } from 'lucide-react'
 import { useCart } from '@/components/cart-provider'
 import { useToast } from '@/components/toast-provider'
 import { CheckoutModal } from '@/components/checkout-modal'
@@ -13,34 +13,38 @@ export default function CartPage() {
   const { showToast } = useToast()
   const [couponInput, setCouponInput] = useState('')
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponInput.trim()) {
-      showToast('Digite um codigo de cupom', 'error')
+      showToast('Digite um codigo de cupom.', 'error')
       return
     }
-    const success = applyCoupon(couponInput)
-    if (success) {
-      showToast(`Cupom aplicado! ${couponInput.toUpperCase()} ativo`, 'success')
+
+    setIsApplyingCoupon(true)
+    const result = await applyCoupon(couponInput)
+    setIsApplyingCoupon(false)
+
+    if (result.ok) {
+      showToast(`Cupom aplicado. ${couponInput.toUpperCase()} ativo.`, 'success')
       setCouponInput('')
     } else {
-      showToast('Cupom invalido ou expirado', 'error')
+      showToast(result.error || 'Cupom invalido ou expirado.', 'error')
     }
   }
 
   const handleRemoveCoupon = () => {
     removeCoupon()
-    showToast('Cupom removido', 'info')
+    showToast('Cupom removido.', 'info')
   }
 
   const handleRemoveItem = (key: string, name: string) => {
     removeFromCart(key)
-    showToast(`${name} removido do carrinho`, 'info')
+    showToast(`${name} removido do carrinho.`, 'info')
   }
 
   return (
     <main className="pt-[72px]">
-      {/* Page Header */}
       <div className="relative bg-card border-b border-border py-12 px-6 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_100%,rgba(75,46,131,0.3)_0%,transparent_70%)]" />
         <div className="relative z-10 max-w-7xl mx-auto">
@@ -53,12 +57,11 @@ export default function CartPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         {cart.length === 0 ? (
-          /* Empty Cart */
           <div className="text-center py-20">
             <ShoppingCart className="w-20 h-20 mx-auto text-muted-foreground mb-6" />
             <h3 className="text-2xl font-bold text-foreground mb-3">Seu carrinho esta vazio</h3>
             <p className="text-muted-foreground mb-8">
-              Explore nosso catalogo e adicione produtos incriveis!
+              Explore nosso catalogo e adicione produtos incriveis.
             </p>
             <Link
               href="/catalogo"
@@ -68,24 +71,16 @@ export default function CartPage() {
             </Link>
           </div>
         ) : (
-          /* Cart with items */
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12">
-            {/* Items */}
             <div className="space-y-4">
-              {cart.map(item => (
+              {cart.map((item) => (
                 <div
                   key={item.key}
                   className="flex flex-col sm:flex-row gap-4 p-5 bg-card border border-border rounded-2xl"
                 >
-                  {/* Image */}
                   <div className="relative w-full sm:w-28 h-28 rounded-xl overflow-hidden bg-muted flex-shrink-0">
                     {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        className="object-cover"
-                      />
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-4xl">
                         {item.emoji}
@@ -93,7 +88,6 @@ export default function CartPage() {
                     )}
                   </div>
 
-                  {/* Info */}
                   <div className="flex-1">
                     <div className="text-xs text-purple-light font-semibold uppercase tracking-wider mb-1">
                       {item.anime}
@@ -102,11 +96,10 @@ export default function CartPage() {
                     <div className="text-sm text-muted-foreground">
                       {item.size && item.size !== 'N/A'
                         ? `Tamanho: ${item.size}`
-                        : 'Boneco Colecionavel'}
+                        : 'Boneco colecionavel'}
                     </div>
                   </div>
 
-                  {/* Controls */}
                   <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-4">
                     <button
                       onClick={() => handleRemoveItem(item.key, item.name)}
@@ -140,14 +133,13 @@ export default function CartPage() {
               ))}
             </div>
 
-            {/* Summary */}
             <aside className="bg-card border border-border rounded-2xl p-6 h-fit lg:sticky lg:top-[96px]">
               <h2 className="font-display text-xl tracking-wide text-foreground mb-6">RESUMO</h2>
 
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">
-                    Subtotal ({cart.reduce((s, i) => s + i.qty, 0)} itens)
+                    Subtotal ({cart.reduce((sum, item) => sum + item.qty, 0)} itens)
                   </span>
                   <span className="text-foreground">
                     R$ {totals.subtotalBruto.toFixed(2).replace('.', ',')}
@@ -163,14 +155,19 @@ export default function CartPage() {
 
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Frete</span>
-                  <span className={totals.frete === 0 ? 'text-green-500 font-semibold' : 'text-foreground'}>
-                    {totals.frete === 0 ? 'GRATIS' : `R$ ${totals.frete.toFixed(2).replace('.', ',')}`}
+                  <span
+                    className={totals.frete === 0 ? 'text-green-500 font-semibold' : 'text-foreground'}
+                  >
+                    {totals.frete === 0
+                      ? 'GRATIS'
+                      : `R$ ${totals.frete.toFixed(2).replace('.', ',')}`}
                   </span>
                 </div>
 
                 {totals.frete > 0 && (
                   <div className="text-xs text-muted-foreground">
-                    Falta R$ {(199 - totals.subtotal).toFixed(2).replace('.', ',')} para frete gratis!
+                    Falta R$ {(199 - totals.subtotal).toFixed(2).replace('.', ',')} para frete
+                    gratis.
                   </div>
                 )}
               </div>
@@ -182,7 +179,6 @@ export default function CartPage() {
                 </span>
               </div>
 
-              {/* Coupon */}
               <div className="mb-6">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -190,7 +186,7 @@ export default function CartPage() {
                     <input
                       type="text"
                       value={coupon ? coupon.code : couponInput}
-                      onChange={e => setCouponInput(e.target.value)}
+                      onChange={(e) => setCouponInput(e.target.value)}
                       placeholder={coupon ? `${coupon.code} aplicado` : 'Codigo de cupom'}
                       disabled={!!coupon}
                       className="w-full pl-10 pr-4 py-2.5 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none disabled:opacity-50"
@@ -206,15 +202,15 @@ export default function CartPage() {
                   ) : (
                     <button
                       onClick={handleApplyCoupon}
-                      className="px-4 py-2.5 border-2 border-border text-foreground font-semibold rounded-lg hover:border-orange hover:text-orange transition-all"
+                      disabled={isApplyingCoupon}
+                      className="px-4 py-2.5 border-2 border-border text-foreground font-semibold rounded-lg hover:border-orange hover:text-orange transition-all disabled:opacity-50"
                     >
-                      Aplicar
+                      {isApplyingCoupon ? 'Validando...' : 'Aplicar'}
                     </button>
                   )}
                 </div>
               </div>
 
-              {/* Checkout Button */}
               <button
                 onClick={() => setIsCheckoutOpen(true)}
                 className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-br from-orange to-orange-dark text-background font-bold rounded-xl hover:shadow-lg transition-all"
@@ -231,7 +227,6 @@ export default function CartPage() {
         )}
       </div>
 
-      {/* Checkout Modal */}
       <CheckoutModal isOpen={isCheckoutOpen} onClose={() => setIsCheckoutOpen(false)} />
     </main>
   )

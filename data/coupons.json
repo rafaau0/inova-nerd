@@ -1,0 +1,34 @@
+[
+  {
+    "code": "OTAKU10",
+    "pct": 10,
+    "minValue": null,
+    "active": true,
+    "maxUses": null,
+    "uses": 0
+  },
+  {
+    "code": "ANIME20",
+    "pct": 20,
+    "minValue": 150,
+    "active": true,
+    "maxUses": 50,
+    "uses": 0
+  },
+  {
+    "code": "VERSE15",
+    "pct": 15,
+    "minValue": null,
+    "active": true,
+    "maxUses": null,
+    "uses": 0
+  },
+  {
+    "code": "PRIMEIRA",
+    "pct": 10,
+    "minValue": null,
+    "active": true,
+    "maxUses": 100,
+    "uses": 0
+  }
+]

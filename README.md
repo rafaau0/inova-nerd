@@ -1,0 +1,72 @@
+# INOVANERD
+
+Loja em `Next.js 16` com `React 19`, checkout integrado ao Mercado Pago, autenticacao local por sessao, area do cliente e painel administrativo.
+
+## Principais recursos
+
+- Catalogo com busca, filtros e favoritos
+- Carrinho local com cupons e checkout
+- Integracao com Mercado Pago via Checkout Pro
+- Cadastro, login e sessao por cookie
+- Area Minha Conta com pedidos do usuario
+- Painel admin para produtos, cupons e pedidos
+- Persistencia local em arquivos JSON dentro de `data/`
+- Sitemap, robots e paginas institucionais
+
+## Credenciais iniciais
+
+- Admin: `admin@inovanerd.com.br`
+- Senha: `admin123`
+
+## Variaveis de ambiente
+
+Crie um `.env.local` baseado em `.env.example`:
+
+```env
+MP_ACCESS_TOKEN=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Para producao, use `.env.production.example` como referencia.
+
+## Scripts
+
+- `npm install`
+- `npm run dev`
+- `npm run build`
+- `npm run lint`
+- `npm test`
+
+## Estrutura de dados local
+
+- `data/products.json`
+- `data/coupons.json`
+- `data/orders.json`
+- `data/users.json`
+- `data/sessions.json`
+
+## Observacoes
+
+- O painel admin usa persistencia local em JSON, ideal para desenvolvimento, demos e prototipos.
+- Para producao real, o proximo passo natural e migrar `data/` para banco de dados.
+
+## Deploy
+
+### Vercel
+
+1. Importe o repositorio na Vercel.
+2. Configure as variaveis:
+   - `MP_ACCESS_TOKEN`
+   - `NEXT_PUBLIC_APP_URL`
+3. Rode o healthcheck em `/api/health`.
+4. Teste o checkout do Mercado Pago em sandbox antes de trocar para credenciais reais.
+
+### Checklist de deploy
+
+- `npm run lint`
+- `npm test`
+- `npm run build`
+- configurar `NEXT_PUBLIC_APP_URL` com a URL final
+- configurar `MP_ACCESS_TOKEN`
+- validar `/api/health`
+- testar login, admin e fluxo de compra

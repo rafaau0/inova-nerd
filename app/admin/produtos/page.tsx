@@ -1,0 +1,22 @@
+import { AdminProductsClient } from '@/components/admin-products-client'
+import { requireAdmin } from '@/lib/auth'
+import { readProducts } from '@/lib/server-store'
+
+export default async function AdminProductsPage() {
+  await requireAdmin()
+  const products = await readProducts()
+
+  return (
+    <main className="pt-[100px] px-6 pb-16">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div>
+          <h1 className="font-display text-4xl text-foreground">PRODUTOS</h1>
+          <p className="text-muted-foreground mt-2">
+            Cadastre e edite produtos, estoque e destaques.
+          </p>
+        </div>
+        <AdminProductsClient initialProducts={products} />
+      </div>
+    </main>
+  )
+}

@@ -1,108 +1,75 @@
 import { NextResponse } from 'next/server'
+import { getCurrentUser } from '@/lib/auth'
+import { createOrder, getOrdersByUser, readOrders } from '@/lib/server-store'
 import type { CreateOrderPayload, OrderResponse } from '@/lib/types'
-
-// ═══════════════════════════════════════════════════════════
-// POST /api/orders
-// Cria um novo pedido
-// 
-// TODO (backend): Implementar integracao com:
-// 1. Banco de dados para salvar o pedido
-// 2. Gateway de pagamento (Stripe, Mercado Pago, etc)
-// 3. Servico de email para confirmacao
-// 4. Atualizacao de estoque
-//
-// Exemplo com Supabase:
-// const { data, error } = await supabase
-//   .from('orders')
-//   .insert({
-//     customer_id: userId,
-//     items: payload.items,
-//     total: payload.totals.total,
-//     coupon_code: payload.coupon,
-//     status: 'pending',
-//     shipping_address: payload.customer,
-//   })
-//   .select()
-//   .single()
-// ═══════════════════════════════════════════════════════════
 
 export async function POST(request: Request) {
   try {
     const payload: CreateOrderPayload = await request.json()
+    const currentUser = await getCurrentUser()
 
-    // Validacao basica
     if (!payload.items || payload.items.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Carrinho vazio' },
+        { success: false, error: 'Carrinho vazio.' },
         { status: 400 }
       )
     }
 
-    if (!payload.customer || !payload.customer.email) {
+    if (!payload.customer?.email) {
       return NextResponse.json(
-        { success: false, error: 'Dados do cliente incompletos' },
+        { success: false, error: 'Dados do cliente incompletos.' },
         { status: 400 }
       )
     }
 
-    // TODO: Validar estoque dos produtos
-    // TODO: Processar pagamento
-    // TODO: Salvar pedido no banco
+    const result = await createOrder({
+      ...payload,
+      userId: currentUser?.id ?? null,
+    })
 
-    // Simulacao de processamento
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // Gera ID do pedido (em producao, vira do banco)
-    const orderId = 'IN' + Date.now().toString().slice(-8)
-
-    // TODO: Enviar email de confirmacao
-    // await sendOrderConfirmationEmail(payload.customer.email, orderId)
-
-    const response: OrderResponse = {
-      success: true,
-      order_id: orderId,
-      message: 'Pedido criado com sucesso',
+    if (!result.ok) {
+      return NextResponse.json(
+        { success: false, error: result.error } satisfies OrderResponse,
+        { status: result.status }
+      )
     }
 
-    return NextResponse.json(response, { status: 201 })
+    return NextResponse.json(
+      {
+        success: true,
+        order_id: result.order.id,
+        message: 'Pedido criado com sucesso.',
+      } satisfies OrderResponse,
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Error creating order:', error)
     return NextResponse.json(
-      { success: false, error: 'Erro ao processar pedido' },
+      { success: false, error: 'Erro ao processar pedido.' } satisfies OrderResponse,
       { status: 500 }
     )
   }
 }
 
-// ═══════════════════════════════════════════════════════════
-// GET /api/orders
-// Lista pedidos do usuario autenticado
-// 
-// TODO (backend): Implementar autenticacao e busca de pedidos
-// ═══════════════════════════════════════════════════════════
-
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    // TODO: Verificar autenticacao
-    // const user = await getAuthenticatedUser(request)
-    // if (!user) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-
-    // TODO: Buscar pedidos do usuario
-    // const { data, error } = await supabase
-    //   .from('orders')
-    //   .select('*')
-    //   .eq('customer_id', user.id)
-    //   .order('created_at', { ascending: false })
+    const currentUser = await getCurrentUser()
+    const orders =
+      currentUser?.role === 'admin'
+        ? await readOrders()
+        : currentUser
+          ? await getOrdersByUser(currentUser.id)
+          : []
 
     return NextResponse.json({
       success: true,
-      data: [],
-      message: 'Endpoint preparado para integracao com autenticacao',
+      data: orders,
+      total: orders.length,
     })
   } catch (error) {
     console.error('Error fetching orders:', error)
     return NextResponse.json(
-      { success: false, error: 'Erro ao buscar pedidos' },
+      { success: false, error: 'Erro ao buscar pedidos.' },
       { status: 500 }
     )
   }

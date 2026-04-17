@@ -1,19 +1,18 @@
 import Link from 'next/link'
+import { RefreshCw, Shield, Shirt, Star, Trophy, Truck } from 'lucide-react'
 import { HeroSection } from '@/components/hero-section'
 import { ProductCard } from '@/components/product-card'
-import { getFeaturedProducts, getBestsellers } from '@/lib/products'
-import { Shirt, Trophy, Star, Truck, Shield, RefreshCw } from 'lucide-react'
+import { readProducts } from '@/lib/server-store'
 
-export default function HomePage() {
-  const featured = getFeaturedProducts()
-  const bestsellers = getBestsellers()
+export default async function HomePage() {
+  const products = await readProducts()
+  const featured = products.filter((product) => product.featured && product.stock > 0).slice(0, 4)
+  const bestsellers = products.filter((product) => product.bestseller && product.stock > 0).slice(0, 4)
 
   return (
     <main>
-      {/* Hero */}
       <HeroSection />
 
-      {/* Categories Strip */}
       <section className="bg-card border-y border-border py-7">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -24,7 +23,7 @@ export default function HomePage() {
               <Shirt className="w-8 h-8 text-orange" />
               <div className="flex-1">
                 <h3 className="font-bold text-foreground">Camisetas</h3>
-                <p className="text-sm text-muted-foreground">Exclusivas & Originais</p>
+                <p className="text-sm text-muted-foreground">Exclusivas e originais</p>
               </div>
               <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all">
                 →
@@ -37,8 +36,8 @@ export default function HomePage() {
             >
               <Trophy className="w-8 h-8 text-orange" />
               <div className="flex-1">
-                <h3 className="font-bold text-foreground">Bonecos Colecionaveis</h3>
-                <p className="text-sm text-muted-foreground">Edicoes Limitadas</p>
+                <h3 className="font-bold text-foreground">Bonecos colecionaveis</h3>
+                <p className="text-sm text-muted-foreground">Edicoes limitadas</p>
               </div>
               <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all">
                 →
@@ -51,7 +50,7 @@ export default function HomePage() {
             >
               <Star className="w-8 h-8 text-orange" />
               <div className="flex-1">
-                <h3 className="font-bold text-foreground">Ver Tudo</h3>
+                <h3 className="font-bold text-foreground">Ver tudo</h3>
                 <p className="text-sm text-muted-foreground">Catalogo completo</p>
               </div>
               <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all">
@@ -62,7 +61,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Featured Products */}
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
@@ -73,19 +71,18 @@ export default function HomePage() {
               NOVIDADES DA SEMANA
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Os lancamentos que estao bombando no universo otaku
+              Os lancamentos que estao bombando no universo otaku.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featured.map((product, i) => (
-              <ProductCard key={product.id} product={product} delay={i * 0.1} />
+            {featured.map((product, index) => (
+              <ProductCard key={product.id} product={product} delay={index * 0.1} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* Bestsellers */}
       <section id="bestsellers" className="py-20 px-6 bg-muted">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
@@ -96,13 +93,13 @@ export default function HomePage() {
               MAIS VENDIDOS
             </h2>
             <p className="text-muted-foreground max-w-lg mx-auto">
-              Os favoritos da nossa comunidade
+              Os favoritos da nossa comunidade.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {bestsellers.map((product, i) => (
-              <ProductCard key={product.id} product={product} delay={i * 0.1} />
+            {bestsellers.map((product, index) => (
+              <ProductCard key={product.id} product={product} delay={index * 0.1} />
             ))}
           </div>
 
@@ -111,15 +108,13 @@ export default function HomePage() {
               href="/catalogo"
               className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold bg-gradient-to-br from-orange to-orange-dark text-background shadow-[0_8px_32px_rgba(245,158,11,0.35)] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(245,158,11,0.55)] transition-all"
             >
-              Ver Catalogo Completo
+              Ver catalogo completo
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Banner CTA */}
       <section className="relative py-16 px-6 bg-purple-dark overflow-hidden">
-        {/* BG Effects */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_50%,rgba(245,158,11,0.2)_0%,transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_100%_50%,rgba(75,46,131,0.5)_0%,transparent_60%)]" />
 
@@ -129,22 +124,22 @@ export default function HomePage() {
               FRETE GRATIS <span className="text-orange">ACIMA DE R$ 199</span>
             </h2>
             <p className="text-white/70">
-              Entregamos para todo o Brasil. Embalagem especial para colecionaveis.
+              Entregamos para todo o Brasil com embalagem especial para colecionaveis.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-white font-bold text-sm">
               <Truck className="w-5 h-5" />
-              Frete Gratis
+              Frete gratis
             </div>
             <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-white font-bold text-sm">
               <Shield className="w-5 h-5" />
-              Compra Segura
+              Compra segura
             </div>
             <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-white font-bold text-sm">
               <RefreshCw className="w-5 h-5" />
-              Troca Facil
+              Troca facil
             </div>
           </div>
         </div>

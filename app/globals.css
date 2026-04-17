@@ -9,6 +9,10 @@
 ═══════════════════════════════════════════════════════════ */
 
 :root {
+  --font-sans: 'Barlow', 'Segoe UI', sans-serif;
+  --font-display: 'Bebas Neue', Impact, sans-serif;
+  --font-condensed: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  --font-mono: 'Consolas', 'Courier New', monospace;
   /* Core Colors */
   --purple: #4B2E83;
   --purple-light: #6B42B8;
@@ -61,11 +65,6 @@
 }
 
 @theme inline {
-  --font-sans: 'Barlow', sans-serif;
-  --font-mono: 'Geist Mono', monospace;
-  --font-display: 'Bebas Neue', sans-serif;
-  --font-condensed: 'Barlow Condensed', sans-serif;
-  
   /* Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);

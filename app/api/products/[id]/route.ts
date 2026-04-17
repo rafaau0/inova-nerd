@@ -1,34 +1,30 @@
 import { NextResponse } from 'next/server'
-import { getProductById, getRelatedProducts } from '@/lib/products'
-
-// ═══════════════════════════════════════════════════════════
-// GET /api/products/[id]
-// Retorna um produto especifico por ID com produtos relacionados
-// 
-// TODO (backend): Conectar com banco de dados
-// const { data, error } = await supabase
-//   .from('products')
-//   .select('*')
-//   .eq('id', id)
-//   .single()
-// ═══════════════════════════════════════════════════════════
+import { readProducts } from '@/lib/server-store'
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    const product = getProductById(Number(id))
+    const products = await readProducts()
+    const product = products.find((item) => item.id === Number(id))
 
     if (!product) {
       return NextResponse.json(
-        { success: false, error: 'Produto nao encontrado' },
+        { success: false, error: 'Produto nao encontrado.' },
         { status: 404 }
       )
     }
 
-    const related = getRelatedProducts(product)
+    const related = products
+      .filter(
+        (item) =>
+          item.id !== product.id &&
+          item.stock > 0 &&
+          (item.anime === product.anime || item.category === product.category)
+      )
+      .slice(0, 4)
 
     return NextResponse.json({
       success: true,
@@ -40,7 +36,7 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching product:', error)
     return NextResponse.json(
-      { success: false, error: 'Erro ao buscar produto' },
+      { success: false, error: 'Erro ao buscar produto.' },
       { status: 500 }
     )
   }

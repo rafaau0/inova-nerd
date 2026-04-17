@@ -2,6 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
+import { track } from '@vercel/analytics'
 import { Heart } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useCart } from './cart-provider'
@@ -22,19 +23,28 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
   const { addToCart, toggleWishlist, isInWishlist } = useCart()
   const { showToast } = useToast()
   const inWishlist = isInWishlist(product.id)
+  const isOutOfStock = product.stock <= 0
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
-    // Se tem tamanhos, precisa selecionar na pagina do produto
+    if (isOutOfStock) {
+      showToast('Produto sem estoque no momento.', 'error')
+      return
+    }
+
     if (product.sizes.length > 0) {
-      showToast('Selecione o tamanho na pagina do produto!', 'info')
+      showToast('Selecione o tamanho na pagina do produto.', 'info')
       return
     }
 
     addToCart(product)
-    showToast(`${product.name} adicionado ao carrinho!`, 'success')
+    track('add_to_cart', {
+      productId: product.id,
+      productName: product.name,
+    })
+    showToast(`${product.name} adicionado ao carrinho.`, 'success')
   }
 
   const handleWishlist = (e: React.MouseEvent) => {
@@ -42,7 +52,7 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
     e.stopPropagation()
     toggleWishlist(product.id)
     showToast(
-      inWishlist ? 'Removido dos favoritos' : 'Adicionado aos favoritos!',
+      inWishlist ? 'Removido dos favoritos.' : 'Adicionado aos favoritos.',
       inWishlist ? 'info' : 'success'
     )
   }
@@ -53,7 +63,6 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
       className="group block bg-card border border-border rounded-2xl overflow-hidden transition-all duration-300 hover:border-orange hover:-translate-y-1.5 hover:shadow-[0_16px_48px_rgba(245,158,11,0.2)]"
       style={{ animationDelay: `${delay}s` }}
     >
-      {/* Image */}
       <div className="relative aspect-square overflow-hidden bg-card-foreground/5">
         {product.image ? (
           <Image
@@ -69,7 +78,6 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
           </div>
         )}
 
-        {/* Badge */}
         {product.badge && (
           <span
             className={`absolute top-3 left-3 ${badgeMap[product.badge].className} text-background text-[11px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wide`}
@@ -78,7 +86,6 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
           </span>
         )}
 
-        {/* Wishlist */}
         <button
           onClick={handleWishlist}
           className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center backdrop-blur-sm transition-all ${
@@ -92,7 +99,6 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
         </button>
       </div>
 
-      {/* Body */}
       <div className="p-4">
         <div className="text-[11px] font-bold uppercase tracking-wider text-purple-light mb-1.5">
           {product.anime}
@@ -113,10 +119,14 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
           </div>
           <button
             onClick={handleQuickAdd}
-            className="bg-gradient-to-br from-purple to-purple-light text-white border-none px-4 py-2 rounded-lg text-sm font-bold transition-all hover:from-orange-dark hover:to-orange hover:text-background hover:scale-105"
+            disabled={isOutOfStock}
+            className="bg-gradient-to-br from-purple to-purple-light text-white border-none px-4 py-2 rounded-lg text-sm font-bold transition-all hover:from-orange-dark hover:to-orange hover:text-background hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            + Carrinho
+            {isOutOfStock ? 'Sem estoque' : '+ Carrinho'}
           </button>
+        </div>
+        <div className="mt-3 text-xs text-muted-foreground">
+          {isOutOfStock ? 'Produto indisponivel.' : `${product.stock} unidade(s) em estoque`}
         </div>
       </div>
     </Link>

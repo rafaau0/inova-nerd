@@ -1,43 +1,25 @@
 import type { Metadata, Viewport } from 'next'
-import { Bebas_Neue, Barlow, Barlow_Condensed } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { CartProvider } from '@/components/cart-provider'
-import { ToastProvider } from '@/components/toast-provider'
-import { Navbar } from '@/components/navbar'
 import { Footer } from '@/components/footer'
+import { Navbar } from '@/components/navbar'
+import { ToastProvider } from '@/components/toast-provider'
 import './globals.css'
 
-const bebasNeue = Bebas_Neue({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-})
-
-const barlow = Barlow({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-sans',
-  display: 'swap',
-})
-
-const barlowCondensed = Barlow_Condensed({
-  subsets: ['latin'],
-  weight: ['600', '700'],
-  variable: '--font-condensed',
-  display: 'swap',
-})
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: 'INOVANERD - Universo Anime | Camisetas e Bonecos Colecionaveis',
-  description: 'Seu destino para produtos de anime de qualidade. Camisetas exclusivas e bonecos colecionaveis dos seus animes favoritos. Arte, paixao e cultura otaku.',
-  keywords: ['anime', 'camisetas', 'bonecos', 'colecionaveis', 'otaku', 'naruto', 'one piece', 'geek'],
+  description:
+    'Seu destino para produtos de anime de qualidade. Camisetas exclusivas e bonecos colecionaveis dos seus animes favoritos.',
+  keywords: ['anime', 'camisetas', 'bonecos', 'colecionaveis', 'otaku', 'naruto', 'geek'],
   authors: [{ name: 'INOVANERD' }],
   creator: 'INOVANERD',
   openGraph: {
     type: 'website',
     locale: 'pt_BR',
-    url: 'https://inovanerd.com.br',
+    url: baseUrl,
     siteName: 'INOVANERD',
     title: 'INOVANERD - Universo Anime',
     description: 'Camisetas exclusivas e bonecos colecionaveis dos seus animes favoritos.',
@@ -74,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="pt-BR" className={`${bebasNeue.variable} ${barlow.variable} ${barlowCondensed.variable}`}>
+    <html lang="pt-BR">
       <body className="font-sans antialiased bg-background text-foreground">
         <ToastProvider>
           <CartProvider>
