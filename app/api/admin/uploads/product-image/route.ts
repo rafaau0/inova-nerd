@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
+import { isProductionJsonDataStore } from '@/lib/data'
 
 function sanitizeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, '-').toLowerCase()
@@ -47,8 +48,11 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Error uploading product image:', error)
+    const message = isProductionJsonDataStore()
+      ? 'Upload local de imagem nao e persistente na Vercel. Use storage externo para imagens em producao.'
+      : 'Nao foi possivel enviar a imagem.'
     return NextResponse.json(
-      { success: false, error: 'Nao foi possivel enviar a imagem.' },
+      { success: false, error: message },
       { status: 500 }
     )
   }

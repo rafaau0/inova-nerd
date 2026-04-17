@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { registerUser } from '@/lib/auth'
+import { isProductionJsonDataStore } from '@/lib/data'
 
 export async function POST(request: Request) {
   try {
@@ -61,8 +62,13 @@ export async function POST(request: Request) {
     return NextResponse.json(result, { status: result.success ? 201 : 400 })
   } catch (error) {
     console.error('Error registering user:', error)
+
+    const message = isProductionJsonDataStore()
+      ? 'Cadastro indisponivel nesta configuracao online. Ative um banco de dados para salvar contas em producao.'
+      : 'Erro ao criar conta.'
+
     return NextResponse.json(
-      { success: false, error: 'Erro ao criar conta.' },
+      { success: false, error: message },
       { status: 500 }
     )
   }

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, Menu, ShoppingCart, User, X } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useCart } from './cart-provider'
 import { IMAGES } from '@/lib/assets'
 import type { AuthUser } from '@/lib/types'
@@ -15,6 +15,7 @@ export function Navbar() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const { cartCount, wishlist } = useCart()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -32,8 +33,20 @@ export function Navbar() {
       setCurrentUser(result.user)
     }
 
+    const syncUser = () => {
+      void loadUser()
+    }
+
     void loadUser()
-  }, [])
+
+    window.addEventListener('focus', syncUser)
+    document.addEventListener('visibilitychange', syncUser)
+
+    return () => {
+      window.removeEventListener('focus', syncUser)
+      document.removeEventListener('visibilitychange', syncUser)
+    }
+  }, [pathname])
 
   const accountHref = useMemo(() => {
     if (!currentUser) return '/entrar'

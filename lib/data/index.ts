@@ -18,3 +18,11 @@ export function getDataStore(): DataStore {
 
   return cachedStore
 }
+
+export function isJsonDataStore() {
+  return (process.env.DATA_PROVIDER || 'json').toLowerCase() === 'json'
+}
+
+export function isProductionJsonDataStore() {
+  return process.env.NODE_ENV === 'production' && isJsonDataStore()
+}
