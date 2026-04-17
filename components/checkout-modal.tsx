@@ -6,7 +6,13 @@ import { CreditCard, FileText, QrCode, X } from 'lucide-react'
 import { useCart } from './cart-provider'
 import { useToast } from './toast-provider'
 import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
-import type { CustomerInfo, PaymentMethod } from '@/lib/types'
+import type {
+  AuthUser,
+  CartTotals,
+  CustomerInfo,
+  PaymentMethod,
+  ShippingQuote,
+} from '@/lib/types'
 
 interface CheckoutModalProps {
   isOpen: boolean
@@ -23,6 +29,15 @@ interface CepLookupResponse {
     bairro: string
     cidade: string
     estado: string
+  }
+}
+
+interface ShippingQuoteResponse {
+  success: boolean
+  error?: string
+  data?: {
+    shipping: ShippingQuote
+    totals: CartTotals
   }
 }
 
@@ -85,6 +100,10 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [isLoadingCep, setIsLoadingCep] = useState(false)
   const [cepError, setCepError] = useState<string | null>(null)
+  const [isLoadingShipping, setIsLoadingShipping] = useState(false)
+  const [shippingTotals, setShippingTotals] = useState<CartTotals | null>(null)
+  const [shippingQuote, setShippingQuote] = useState<ShippingQuote | null>(null)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const modalRef = useRef<HTMLDivElement>(null)
 
   const [customer, setCustomer] = useState<CustomerInfo>({
@@ -108,12 +127,51 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     nome: '',
   })
 
+  useEffect(() => {
+    if (!isOpen) return
+
+    let cancelled = false
+
+    const loadCurrentUser = async () => {
+      const response = await fetch('/api/auth/me', { cache: 'no-store' })
+      const result = (await response.json()) as { user: AuthUser | null }
+      if (cancelled) return
+
+      setCurrentUser(result.user)
+      if (!result.user) return
+
+      setCustomer((prev) => ({
+        ...prev,
+        nome: prev.nome || result.user?.nome || '',
+        email: prev.email || result.user?.email || '',
+        cpf: prev.cpf || result.user?.cpf || '',
+        telefone: prev.telefone || result.user?.telefone || '',
+        cep: prev.cep || result.user?.cep || '',
+        endereco: prev.endereco || result.user?.endereco || '',
+        numero: prev.numero || result.user?.numero || '',
+        complemento: prev.complemento || result.user?.complemento || '',
+        bairro: prev.bairro || result.user?.bairro || '',
+        cidade: prev.cidade || result.user?.cidade || '',
+        estado: prev.estado || result.user?.estado || '',
+      }))
+    }
+
+    void loadCurrentUser()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen])
+
   const resetState = () => {
     setStep(1)
     setPaymentMethod('credit_card')
     setIsProcessing(false)
     setIsLoadingCep(false)
     setCepError(null)
+    setIsLoadingShipping(false)
+    setShippingTotals(null)
+    setShippingQuote(null)
     setShippingDestination(null)
     setCard({
       numero: '',
@@ -195,6 +253,82 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setShippingDestination(null)
   }, [customer.cidade, customer.estado, customer.cep, setShippingDestination])
 
+  useEffect(() => {
+    if (!isOpen || !hasResolvedShippingDestination(customer) || cart.length === 0) {
+      return
+    }
+
+    let cancelled = false
+
+    const quoteShipping = async () => {
+      setIsLoadingShipping(true)
+
+      try {
+        const response = await fetch('/api/shipping/quote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            items: cart.map((item) => ({
+              product_id: item.id,
+              variant: item.size,
+              qty: item.qty,
+              price: item.price,
+            })),
+            coupon: coupon?.code || null,
+            destination: {
+              cep: customer.cep,
+              cidade: customer.cidade,
+              estado: customer.estado,
+            },
+          }),
+        })
+
+        const result = (await response.json()) as ShippingQuoteResponse
+
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(result.error || 'Nao foi possivel atualizar o frete.')
+        }
+
+        if (cancelled) return
+
+        setShippingQuote(result.data.shipping)
+        setShippingTotals(result.data.totals)
+      } catch (error) {
+        if (cancelled) return
+
+        setShippingQuote({
+          amount: totals.frete,
+          source: 'fallback',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Nao foi possivel atualizar o frete em tempo real.',
+        })
+        setShippingTotals(null)
+      } finally {
+        if (!cancelled) {
+          setIsLoadingShipping(false)
+        }
+      }
+    }
+
+    void quoteShipping()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isOpen, customer, cart, coupon, totals.frete])
+
+  const shouldUseRealtimeShipping =
+    isOpen && hasResolvedShippingDestination(customer) && cart.length > 0
+  const shippingLoading = shouldUseRealtimeShipping && isLoadingShipping
+  const effectiveTotals =
+    shouldUseRealtimeShipping ? shippingTotals ?? totals : totals
+  const shippingMessage =
+    shouldUseRealtimeShipping ? shippingQuote?.message || null : null
+
   const handleBackdropClick = (event: React.MouseEvent) => {
     if (event.target === modalRef.current) {
       resetState()
@@ -257,6 +391,11 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   }
 
   const goToStep2 = () => {
+    if (shippingLoading) {
+      showToast('Aguarde a atualizacao do frete antes de continuar.', 'info')
+      return
+    }
+
     if (validateStep1()) {
       setShippingDestination({
         cidade: customer.cidade,
@@ -286,7 +425,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             price: item.price,
           })),
           coupon: coupon?.code || null,
-          totals,
+          totals: effectiveTotals,
           customer,
           paymentMethod,
         }),
@@ -304,7 +443,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       track('begin_checkout', {
         paymentMethod,
-        total: totals.total,
+        total: effectiveTotals.total,
       })
       clearCart()
       window.location.href = result.init_point
@@ -318,6 +457,8 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   }
 
   if (!isOpen) return null
+
+  if (!currentUser) return null
 
   return (
     <div
@@ -419,7 +560,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     !cepError &&
                     hasResolvedShippingDestination(customer) && (
                       <span className="text-green-500">
-                        Endereco localizado. Frete atualizado para {customer.cidade}/{customer.estado}.
+                        Endereco localizado. Atualizando frete para {customer.cidade}/{customer.estado}.
                       </span>
                     )}
                 </div>
@@ -502,9 +643,10 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
               <button
                 onClick={goToStep2}
+                disabled={shippingLoading}
                 className="w-full mt-4 px-6 py-3 bg-gradient-to-br from-orange to-orange-dark text-background font-bold rounded-xl hover:shadow-lg transition-all"
               >
-                Continuar para pagamento
+                {shippingLoading ? 'Atualizando frete...' : 'Continuar para pagamento'}
               </button>
             </div>
           )}
@@ -603,31 +745,37 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="text-foreground">
-                    R$ {totals.subtotalBruto.toFixed(2).replace('.', ',')}
+                    R$ {effectiveTotals.subtotalBruto.toFixed(2).replace('.', ',')}
                   </span>
                 </div>
-                {totals.desconto > 0 && (
+                {effectiveTotals.desconto > 0 && (
                   <div className="flex justify-between text-sm mb-2 text-green-500">
                     <span>Cupom ({coupon?.code})</span>
-                    <span>- R$ {totals.desconto.toFixed(2).replace('.', ',')}</span>
+                    <span>- R$ {effectiveTotals.desconto.toFixed(2).replace('.', ',')}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">Frete</span>
-                  <span className={totals.frete === 0 ? 'text-green-500' : 'text-foreground'}>
-                    {totals.frete === 0 ? 'GRATIS' : `R$ ${totals.frete.toFixed(2).replace('.', ',')}`}
+                  <span className={effectiveTotals.frete === 0 ? 'text-green-500' : 'text-foreground'}>
+                    {shippingLoading
+                      ? 'Calculando...'
+                      : effectiveTotals.frete === 0
+                        ? 'GRATIS'
+                        : `R$ ${effectiveTotals.frete.toFixed(2).replace('.', ',')}`}
                   </span>
                 </div>
-                {hasResolvedShippingDestination(customer) && (
+                {hasResolvedShippingDestination(customer) && !shippingLoading && (
                   <div className="text-xs text-muted-foreground mb-2">
                     {isCatalaoGoias(customer)
                       ? 'Frete gratis aplicado para entregas em Catalao/GO.'
-                      : `Frete calculado para ${customer.cidade}/${customer.estado}.`}
+                      : shippingMessage || `Frete calculado para ${customer.cidade}/${customer.estado}.`}
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold pt-2 border-t border-border mt-2">
                   <span className="text-foreground">Total</span>
-                  <span className="text-orange">R$ {totals.total.toFixed(2).replace('.', ',')}</span>
+                  <span className="text-orange">
+                    R$ {effectiveTotals.total.toFixed(2).replace('.', ',')}
+                  </span>
                 </div>
               </div>
 
@@ -640,12 +788,14 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 </button>
                 <button
                   onClick={finalizePurchase}
-                  disabled={isProcessing}
+                  disabled={isProcessing || shippingLoading}
                   className="flex-1 px-6 py-3 bg-gradient-to-br from-orange to-orange-dark text-background font-bold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
                 >
                   {isProcessing
                     ? 'Abrindo checkout...'
-                    : `Ir para Mercado Pago R$ ${totals.total.toFixed(2).replace('.', ',')}`}
+                    : shippingLoading
+                      ? 'Atualizando frete...'
+                      : `Ir para Mercado Pago R$ ${effectiveTotals.total.toFixed(2).replace('.', ',')}`}
                 </button>
               </div>
             </div>

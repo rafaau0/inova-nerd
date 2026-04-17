@@ -9,11 +9,30 @@ export async function POST(request: Request) {
       password?: string
       cpf?: string
       telefone?: string
+      cep?: string
+      endereco?: string
+      numero?: string
+      complemento?: string
+      bairro?: string
+      cidade?: string
+      estado?: string
     }
 
-    if (!body.nome || !body.email || !body.password) {
+    if (
+      !body.nome ||
+      !body.email ||
+      !body.password ||
+      !body.cpf ||
+      !body.telefone ||
+      !body.cep ||
+      !body.endereco ||
+      !body.numero ||
+      !body.bairro ||
+      !body.cidade ||
+      !body.estado
+    ) {
       return NextResponse.json(
-        { success: false, error: 'Nome, e-mail e senha sao obrigatorios.' },
+        { success: false, error: 'Preencha todos os dados obrigatorios do cadastro.' },
         { status: 400 }
       )
     }
@@ -31,6 +50,13 @@ export async function POST(request: Request) {
       password: body.password,
       cpf: body.cpf,
       telefone: body.telefone,
+      cep: body.cep,
+      endereco: body.endereco,
+      numero: body.numero,
+      complemento: body.complemento,
+      bairro: body.bairro,
+      cidade: body.cidade,
+      estado: body.estado,
     })
     return NextResponse.json(result, { status: result.success ? 201 : 400 })
   } catch (error) {

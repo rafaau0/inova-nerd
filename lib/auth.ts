@@ -58,6 +58,13 @@ export async function registerUser(input: {
   password: string
   cpf?: string
   telefone?: string
+  cep?: string
+  endereco?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
 }) {
   const existing = await findUserByEmail(input.email)
   if (existing) {
@@ -73,6 +80,13 @@ export async function registerUser(input: {
     email: input.email.trim().toLowerCase(),
     cpf: input.cpf?.trim() || '',
     telefone: input.telefone?.trim() || '',
+    cep: input.cep?.trim() || '',
+    endereco: input.endereco?.trim() || '',
+    numero: input.numero?.trim() || '',
+    complemento: input.complemento?.trim() || '',
+    bairro: input.bairro?.trim() || '',
+    cidade: input.cidade?.trim() || '',
+    estado: input.estado?.trim().toUpperCase() || '',
     passwordHash: hashPassword(input.password),
     role: 'customer',
     createdAt: new Date().toISOString(),

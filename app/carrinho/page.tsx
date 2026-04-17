@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Lock, Minus, Plus, ShoppingCart, Tag, Trash2 } from 'lucide-react'
@@ -8,6 +8,7 @@ import { useCart } from '@/components/cart-provider'
 import { useToast } from '@/components/toast-provider'
 import { CheckoutModal } from '@/components/checkout-modal'
 import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
+import type { AuthUser } from '@/lib/types'
 
 export default function CartPage() {
   const {
@@ -24,6 +25,17 @@ export default function CartPage() {
   const [couponInput, setCouponInput] = useState('')
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
+
+  useEffect(() => {
+    const loadUser = async () => {
+      const response = await fetch('/api/auth/me', { cache: 'no-store' })
+      const result = (await response.json()) as { user: AuthUser | null }
+      setCurrentUser(result.user)
+    }
+
+    void loadUser()
+  }, [])
 
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) {
@@ -237,16 +249,36 @@ export default function CartPage() {
                 </div>
               </div>
 
-              <button
-                onClick={() => setIsCheckoutOpen(true)}
-                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-br from-orange to-orange-dark text-background font-bold rounded-xl hover:shadow-lg transition-all"
-              >
-                <Lock className="w-5 h-5" />
-                Finalizar Compra
-              </button>
+              {currentUser ? (
+                <button
+                  onClick={() => setIsCheckoutOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-br from-orange to-orange-dark text-background font-bold rounded-xl hover:shadow-lg transition-all"
+                >
+                  <Lock className="w-5 h-5" />
+                  Finalizar Compra
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <Link
+                    href="/cadastro?redirectTo=%2Fcarrinho"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-gradient-to-br from-orange to-orange-dark text-background font-bold rounded-xl hover:shadow-lg transition-all"
+                  >
+                    <Lock className="w-5 h-5" />
+                    Cadastre-se para comprar
+                  </Link>
+                  <Link
+                    href="/entrar?redirectTo=%2Fcarrinho"
+                    className="w-full flex items-center justify-center gap-2 px-6 py-4 border-2 border-border text-foreground font-bold rounded-xl hover:border-muted-foreground transition-all"
+                  >
+                    Ja tenho conta
+                  </Link>
+                </div>
+              )}
 
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Compra 100% segura - Dados criptografados
+                {currentUser
+                  ? 'Compra 100% segura - Dados criptografados'
+                  : 'Para concluir a compra, entre na sua conta ou crie um cadastro completo.'}
               </p>
             </aside>
           </div>

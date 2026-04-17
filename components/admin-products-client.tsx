@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import type { Product } from '@/lib/types'
 
@@ -32,6 +33,7 @@ export function AdminProductsClient({ initialProducts }: AdminProductsClientProp
     ...emptyProduct,
   })
   const [message, setMessage] = useState('')
+  const [isUploadingImage, setIsUploadingImage] = useState(false)
 
   const saveProduct = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -65,15 +67,24 @@ export function AdminProductsClient({ initialProducts }: AdminProductsClientProp
       }
     )
 
-    const result = (await response.json()) as { success: boolean; data: Product }
-    if (result.success) {
-      const nextProducts = isEditing
-        ? products.map((product) => (product.id === result.data.id ? result.data : product))
-        : [...products, result.data].sort((a, b) => a.id - b.id)
-      setProducts(nextProducts)
-      setForm({ ...emptyProduct })
-      setMessage('Produto salvo com sucesso.')
+    const result = (await response.json()) as {
+      success: boolean
+      error?: string
+      data?: Product
     }
+
+    if (!response.ok || !result.success || !result.data) {
+      setMessage(result.error || 'Nao foi possivel salvar o produto.')
+      return
+    }
+
+    const nextProducts = isEditing
+      ? products.map((product) => (product.id === result.data!.id ? result.data! : product))
+      : [...products, result.data].sort((a, b) => a.id - b.id)
+
+    setProducts(nextProducts)
+    setForm({ ...emptyProduct })
+    setMessage('Produto salvo com sucesso.')
   }
 
   const editProduct = (product: Product) => {
@@ -87,9 +98,44 @@ export function AdminProductsClient({ initialProducts }: AdminProductsClientProp
     setMessage('Produto removido.')
   }
 
+  const uploadImage = async (file: File) => {
+    setIsUploadingImage(true)
+    setMessage('')
+
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const response = await fetch('/api/admin/uploads/product-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = (await response.json()) as {
+        success: boolean
+        error?: string
+        data?: { url: string }
+      }
+
+      if (!response.ok || !result.success || !result.data?.url) {
+        throw new Error(result.error || 'Nao foi possivel enviar a imagem.')
+      }
+
+      setForm((prev) => ({ ...prev, image: result.data?.url || prev.image }))
+      setMessage('Imagem enviada com sucesso.')
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Falha ao enviar imagem.')
+    } finally {
+      setIsUploadingImage(false)
+    }
+  }
+
   return (
     <div className="grid lg:grid-cols-[420px_1fr] gap-8">
-      <form onSubmit={saveProduct} className="bg-card border border-border rounded-3xl p-6 space-y-4 h-fit">
+      <form
+        onSubmit={saveProduct}
+        className="bg-card border border-border rounded-3xl p-6 space-y-4 h-fit"
+      >
         <h2 className="font-display text-2xl text-foreground">
           {form.id ? 'EDITAR PRODUTO' : 'NOVO PRODUTO'}
         </h2>
@@ -124,6 +170,32 @@ export function AdminProductsClient({ initialProducts }: AdminProductsClientProp
             />
           </label>
         ))}
+
+        <label className="block">
+          <span className="text-sm font-medium text-foreground">Enviar imagem</span>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (file) {
+                void uploadImage(file)
+              }
+            }}
+            className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-xl"
+          />
+          {isUploadingImage && (
+            <span className="text-xs text-muted-foreground mt-1 block">Enviando imagem...</span>
+          )}
+        </label>
+
+        {form.image && (
+          <div className="rounded-2xl border border-border p-3 bg-muted/30">
+            <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-muted">
+              <Image src={form.image} alt={form.name || 'Preview'} fill className="object-cover" />
+            </div>
+          </div>
+        )}
 
         <label className="block">
           <span className="text-sm font-medium text-foreground">Categoria</span>
@@ -215,13 +287,20 @@ export function AdminProductsClient({ initialProducts }: AdminProductsClientProp
         {products.map((product) => (
           <article key={product.id} className="bg-card border border-border rounded-3xl p-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h3 className="font-semibold text-foreground">
-                  #{product.id} {product.name}
-                </h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {product.category} • estoque {product.stock} • R$ {product.price.toFixed(2).replace('.', ',')}
-                </p>
+              <div className="flex items-start gap-4">
+                {product.image && (
+                  <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-border">
+                    <Image src={product.image} alt={product.name} fill className="object-cover" />
+                  </div>
+                )}
+                <div>
+                  <h3 className="font-semibold text-foreground">
+                    #{product.id} {product.name}
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {product.category} • estoque {product.stock} • R$ {product.price.toFixed(2).replace('.', ',')}
+                  </p>
+                </div>
               </div>
               <div className="flex gap-3">
                 <button

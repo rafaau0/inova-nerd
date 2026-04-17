@@ -2,7 +2,7 @@ export type ProductCategory = 'camisetas' | 'bonecos'
 export type BadgeType = 'new' | 'sale' | 'hot' | null
 export type PaymentMethod = 'credit_card' | 'pix' | 'boleto' | 'debit'
 export type PaymentStatus = 'pending' | 'paid' | 'failed'
-export type OrderStatus = 'awaiting_payment' | 'confirmed' | 'cancelled'
+export type OrderStatus = 'awaiting_payment' | 'confirmed' | 'in_transit' | 'cancelled'
 export type UserRole = 'customer' | 'admin'
 
 export interface Product {
@@ -96,6 +96,16 @@ export interface ShippingDestination {
   cep?: string
 }
 
+export type ShippingQuoteSource = 'free' | 'correios' | 'fallback'
+
+export interface ShippingQuote {
+  amount: number
+  source: ShippingQuoteSource
+  serviceCode?: string | null
+  serviceName?: string | null
+  message?: string | null
+}
+
 export interface CreateOrderPayload {
   items: OrderItem[]
   coupon: string | null
@@ -144,6 +154,13 @@ export interface UserRecord {
   email: string
   cpf?: string
   telefone?: string
+  cep?: string
+  endereco?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
   passwordHash: string
   role: UserRole
   createdAt: string
@@ -161,6 +178,15 @@ export interface AuthUser {
   nome: string
   email: string
   role: UserRole
+  cpf?: string
+  telefone?: string
+  cep?: string
+  endereco?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
 }
 
 export interface AuthResponse {

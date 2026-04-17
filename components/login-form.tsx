@@ -4,7 +4,11 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export function LoginForm() {
+interface LoginFormProps {
+  redirectTo?: string
+}
+
+export function LoginForm({ redirectTo = '/minha-conta' }: LoginFormProps) {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -30,7 +34,7 @@ export function LoginForm() {
         throw new Error(result.error || 'Nao foi possivel entrar.')
       }
 
-      router.push('/minha-conta')
+      router.push(redirectTo)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel entrar.')
@@ -82,7 +86,7 @@ export function LoginForm() {
 
       <p className="text-sm text-muted-foreground">
         Ainda nao tem conta?{' '}
-        <Link href="/cadastro" className="text-orange font-semibold">
+        <Link href={`/cadastro?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-orange font-semibold">
           Criar agora
         </Link>
       </p>

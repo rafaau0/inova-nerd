@@ -1,3 +1,4 @@
+import { AdminOrdersClient } from '@/components/admin-orders-client'
 import { requireAdmin } from '@/lib/auth'
 import { readOrders } from '@/lib/server-store'
 
@@ -15,32 +16,7 @@ export default async function AdminOrdersPage() {
           </p>
         </div>
 
-        <div className="space-y-4">
-          {orders.map((order) => (
-            <article key={order.id} className="bg-card border border-border rounded-3xl p-6">
-              <div className="flex flex-wrap justify-between gap-4">
-                <div>
-                  <h2 className="font-semibold text-foreground">#{order.id}</h2>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {order.customer.nome} • {order.customer.email}
-                  </p>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  <div>Status: {order.status}</div>
-                  <div>Pagamento: {order.paymentStatus}</div>
-                  <div>Metodo: {order.paymentMethod}</div>
-                </div>
-              </div>
-
-              <div className="mt-4 text-sm text-muted-foreground">
-                {order.items.map((item) => `${item.product_name} x${item.qty}`).join(' • ')}
-              </div>
-              <div className="mt-4 font-bold text-orange">
-                Total: R$ {order.totals.total.toFixed(2).replace('.', ',')}
-              </div>
-            </article>
-          ))}
-        </div>
+        <AdminOrdersClient initialOrders={orders} />
       </div>
     </main>
   )

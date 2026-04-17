@@ -25,9 +25,20 @@ Crie um `.env.local` baseado em `.env.example`:
 ```env
 MP_ACCESS_TOKEN=TEST-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+CORREIOS_ACCESS_TOKEN=COLE_O_TOKEN_DA_API_PRECO
+CORREIOS_ORIGIN_CEP=75700000
+CORREIOS_SERVICE_CODE=03220
+CORREIOS_SERVICE_NAME=SEDEX
 ```
 
 Para producao, use `.env.production.example` como referencia.
+
+### Frete dinamico via Correios
+
+- O checkout consulta a API oficial de preco dos Correios em tempo real quando o `CEP` de entrega esta completo.
+- `Catalao/GO` continua com `frete gratis`.
+- Se as credenciais dos Correios nao estiverem configuradas ou a cotacao falhar, o sistema cai para a estimativa local para nao travar a venda.
+- A API oficial de preco dos Correios e restrita a clientes com contrato e usa `Bearer Token`.
 
 ## Scripts
 

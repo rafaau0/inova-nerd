@@ -2,13 +2,14 @@ import 'server-only'
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { calculateShipping } from './shipping'
+import { getShippingQuote } from './shipping-server'
 import type {
   AuthUser,
   CreateCouponPayload,
   CreateOrderPayload,
   CouponDefinition,
   OrderRecord,
+  OrderStatus,
   Product,
   SessionRecord,
   UserRecord,
@@ -189,6 +190,15 @@ export function toAuthUser(user: UserRecord): AuthUser {
     nome: user.nome,
     email: user.email,
     role: user.role,
+    cpf: user.cpf || '',
+    telefone: user.telefone || '',
+    cep: user.cep || '',
+    endereco: user.endereco || '',
+    numero: user.numero || '',
+    complemento: user.complemento || '',
+    bairro: user.bairro || '',
+    cidade: user.cidade || '',
+    estado: user.estado || '',
   }
 }
 
@@ -197,11 +207,28 @@ export async function getOrdersByUser(userId: string) {
   return orders.filter((order) => order.userId === userId)
 }
 
-export async function createOrder(payload: CreateOrderPayload & { userId?: string | null }) {
+export async function updateOrderStatus(orderId: string, status: OrderStatus) {
+  const orders = await readOrders()
+  const nextOrders = orders.map((order) =>
+    order.id === orderId
+      ? {
+          ...order,
+          status,
+        }
+      : order
+  )
+
+  await writeOrders(nextOrders)
+  return nextOrders.find((order) => order.id === orderId) ?? null
+}
+
+export async function quoteOrderPricing(payload: {
+  items: CreateOrderPayload['items']
+  coupon: string | null
+  customer: Pick<CreateOrderPayload['customer'], 'cidade' | 'estado' | 'cep'>
+}) {
   const products = await readProducts()
   const coupons = await readCoupons()
-  const orders = await readOrders()
-
   const productMap = new Map(products.map((product) => [product.id, product]))
   const missingItems: number[] = []
   const stockErrors: string[] = []
@@ -271,18 +298,56 @@ export async function createOrder(payload: CreateOrderPayload & { userId?: strin
     }
   }
 
-  const orderId = `IN${Date.now().toString().slice(-8)}`
-  const createdAt = new Date().toISOString()
   const desconto = appliedCoupon ? subtotalBruto * (appliedCoupon.pct / 100) : 0
   const subtotal = subtotalBruto - desconto
-  const frete = calculateShipping(subtotal, {
-    cidade: payload.customer.cidade,
-    estado: payload.customer.estado,
-    cep: payload.customer.cep,
-  })
-  const total = subtotal + frete
+  const shippingQuote = await getShippingQuote(
+    subtotal,
+    {
+      cidade: payload.customer.cidade,
+      estado: payload.customer.estado,
+      cep: payload.customer.cep,
+    },
+    payload.items.reduce((sum, item) => sum + item.qty, 0)
+  )
+  const total = subtotal + shippingQuote.amount
 
-  const updatedProducts = products.map((product) => {
+  return {
+    ok: true as const,
+    products,
+    coupons,
+    productMap,
+    appliedCoupon,
+    shippingQuote,
+    totals: {
+      subtotalBruto,
+      desconto,
+      subtotal,
+      frete: shippingQuote.amount,
+      total,
+    },
+  }
+}
+
+export async function createOrder(payload: CreateOrderPayload & { userId?: string | null }) {
+  const orders = await readOrders()
+  const pricing = await quoteOrderPricing({
+    items: payload.items,
+    coupon: payload.coupon,
+    customer: {
+      cidade: payload.customer.cidade,
+      estado: payload.customer.estado,
+      cep: payload.customer.cep,
+    },
+  })
+
+  if (!pricing.ok) {
+    return pricing
+  }
+
+  const orderId = `IN${Date.now().toString().slice(-8)}`
+  const createdAt = new Date().toISOString()
+
+  const updatedProducts = pricing.products.map((product) => {
     const orderedItem = payload.items.find((item) => item.product_id === product.id)
     if (!orderedItem) return product
 
@@ -301,15 +366,9 @@ export async function createOrder(payload: CreateOrderPayload & { userId?: strin
     userId: payload.userId ?? null,
     customer: payload.customer,
     coupon: payload.coupon,
-    totals: {
-      subtotalBruto,
-      desconto,
-      subtotal,
-      frete,
-      total,
-    },
+    totals: pricing.totals,
     items: payload.items.map((item) => {
-      const product = productMap.get(item.product_id)!
+      const product = pricing.productMap.get(item.product_id)!
       return {
         ...item,
         price: product.price,
@@ -321,9 +380,9 @@ export async function createOrder(payload: CreateOrderPayload & { userId?: strin
   await writeProducts(updatedProducts)
   await writeOrders([orderRecord, ...orders])
 
-  if (appliedCoupon) {
-    const updatedCoupons = coupons.map((coupon) =>
-      coupon.code === appliedCoupon.code ? { ...coupon, uses: coupon.uses + 1 } : coupon
+  if (pricing.appliedCoupon) {
+    const updatedCoupons = pricing.coupons.map((coupon) =>
+      coupon.code === pricing.appliedCoupon?.code ? { ...coupon, uses: coupon.uses + 1 } : coupon
     )
     await writeCoupons(updatedCoupons)
   }

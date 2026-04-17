@@ -2,9 +2,26 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-export function RegisterForm() {
+interface RegisterFormProps {
+  redirectTo?: string
+}
+
+interface CepLookupResponse {
+  success: boolean
+  error?: string
+  data?: {
+    cep: string
+    endereco: string
+    complemento: string
+    bairro: string
+    cidade: string
+    estado: string
+  }
+}
+
+export function RegisterForm({ redirectTo = '/minha-conta' }: RegisterFormProps) {
   const router = useRouter()
   const [form, setForm] = useState({
     nome: '',
@@ -12,9 +29,63 @@ export function RegisterForm() {
     password: '',
     cpf: '',
     telefone: '',
+    cep: '',
+    endereco: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
   })
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingCep, setIsLoadingCep] = useState(false)
+
+  useEffect(() => {
+    const cepDigits = form.cep.replace(/\D/g, '')
+    if (cepDigits.length !== 8) return
+
+    let cancelled = false
+
+    const lookupCep = async () => {
+      setIsLoadingCep(true)
+      setError('')
+
+      try {
+        const response = await fetch(`/api/address/cep/${cepDigits}`)
+        const result = (await response.json()) as CepLookupResponse
+
+        if (!response.ok || !result.success || !result.data) {
+          throw new Error(result.error || 'Nao foi possivel localizar o CEP.')
+        }
+
+        if (cancelled) return
+
+        setForm((prev) => ({
+          ...prev,
+          cep: result.data?.cep || prev.cep,
+          endereco: result.data?.endereco || prev.endereco,
+          complemento: prev.complemento || result.data?.complemento || '',
+          bairro: result.data?.bairro || prev.bairro,
+          cidade: result.data?.cidade || prev.cidade,
+          estado: result.data?.estado || prev.estado,
+        }))
+      } catch (err) {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : 'Nao foi possivel localizar o CEP.')
+      } finally {
+        if (!cancelled) {
+          setIsLoadingCep(false)
+        }
+      }
+    }
+
+    void lookupCep()
+
+    return () => {
+      cancelled = true
+    }
+  }, [form.cep])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -35,7 +106,7 @@ export function RegisterForm() {
         throw new Error(result.error || 'Nao foi possivel criar a conta.')
       }
 
-      router.push('/minha-conta')
+      router.push(redirectTo)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Nao foi possivel criar a conta.')
@@ -59,6 +130,13 @@ export function RegisterForm() {
         ['password', 'Senha', 'password'],
         ['cpf', 'CPF', 'text'],
         ['telefone', 'Telefone', 'text'],
+        ['cep', 'CEP', 'text'],
+        ['endereco', 'Endereco', 'text'],
+        ['numero', 'Numero', 'text'],
+        ['bairro', 'Bairro', 'text'],
+        ['cidade', 'Cidade', 'text'],
+        ['estado', 'Estado', 'text'],
+        ['complemento', 'Complemento', 'text'],
       ].map(([key, label, type]) => (
         <label className="block" key={key}>
           <span className="text-sm text-foreground font-medium">{label}</span>
@@ -73,6 +151,8 @@ export function RegisterForm() {
         </label>
       ))}
 
+      {isLoadingCep && <p className="text-sm text-muted-foreground">Buscando endereco pelo CEP...</p>}
+
       {error && <p className="text-sm text-red-400">{error}</p>}
 
       <button
@@ -85,7 +165,7 @@ export function RegisterForm() {
 
       <p className="text-sm text-muted-foreground">
         Ja tem conta?{' '}
-        <Link href="/entrar" className="text-orange font-semibold">
+        <Link href={`/entrar?redirectTo=${encodeURIComponent(redirectTo)}`} className="text-orange font-semibold">
           Fazer login
         </Link>
       </p>
