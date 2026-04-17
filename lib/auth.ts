@@ -4,10 +4,7 @@ import crypto from 'node:crypto'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import {
-  createSession,
   createUser,
-  deleteSession,
-  findSession,
   findUserByEmail,
   findUserById,
   toAuthUser,
@@ -16,6 +13,7 @@ import type { AuthUser, UserRecord } from './types'
 
 const SESSION_COOKIE = 'inovanerd_session'
 const SESSION_DURATION_DAYS = 7
+const SESSION_SECRET = process.env.SESSION_SECRET || 'inovanerd-local-session-secret'
 
 function hashPassword(password: string) {
   return crypto.createHash('sha256').update(password).digest('hex')
@@ -23,6 +21,35 @@ function hashPassword(password: string) {
 
 function generateId(prefix: string) {
   return `${prefix}_${crypto.randomBytes(8).toString('hex')}`
+}
+
+function signSessionPayload(payload: string) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
+}
+
+function encodeSession(userId: string, expiresAt: string) {
+  const payload = JSON.stringify({ userId, expiresAt })
+  const payloadBase64 = Buffer.from(payload, 'utf-8').toString('base64url')
+  const signature = signSessionPayload(payloadBase64)
+  return `${payloadBase64}.${signature}`
+}
+
+function decodeSession(token: string) {
+  const [payloadBase64, signature] = token.split('.')
+  if (!payloadBase64 || !signature) return null
+
+  const expectedSignature = signSessionPayload(payloadBase64)
+  if (signature !== expectedSignature) return null
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadBase64, 'base64url').toString('utf-8')) as {
+      userId: string
+      expiresAt: string
+    }
+    return payload
+  } catch {
+    return null
+  }
 }
 
 export async function registerUser(input: {
@@ -71,17 +98,10 @@ export async function loginUser(email: string, password: string) {
 }
 
 async function createUserSession(user: UserRecord): Promise<AuthUser> {
-  const token = crypto.randomBytes(24).toString('hex')
   const createdAt = new Date()
   const expiresAt = new Date(createdAt)
   expiresAt.setDate(expiresAt.getDate() + SESSION_DURATION_DAYS)
-
-  await createSession({
-    token,
-    userId: user.id,
-    createdAt: createdAt.toISOString(),
-    expiresAt: expiresAt.toISOString(),
-  })
+  const token = encodeSession(user.id, expiresAt.toISOString())
 
   const cookieStore = await cookies()
   cookieStore.set(SESSION_COOKIE, token, {
@@ -97,11 +117,7 @@ async function createUserSession(user: UserRecord): Promise<AuthUser> {
 
 export async function logoutUser() {
   const cookieStore = await cookies()
-  const sessionToken = cookieStore.get(SESSION_COOKIE)?.value
-  if (sessionToken) {
-    await deleteSession(sessionToken)
-    cookieStore.delete(SESSION_COOKIE)
-  }
+  cookieStore.delete(SESSION_COOKIE)
 }
 
 export async function getCurrentUser() {
@@ -109,11 +125,10 @@ export async function getCurrentUser() {
   const sessionToken = cookieStore.get(SESSION_COOKIE)?.value
   if (!sessionToken) return null
 
-  const session = await findSession(sessionToken)
+  const session = decodeSession(sessionToken)
   if (!session) return null
 
   if (new Date(session.expiresAt) < new Date()) {
-    await deleteSession(sessionToken)
     cookieStore.delete(SESSION_COOKIE)
     return null
   }
