@@ -1,9 +1,27 @@
 import { NextResponse } from 'next/server'
 import { registerUser } from '@/lib/auth'
-import { isProductionJsonDataStore } from '@/lib/data'
+import { consumeRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = consumeRateLimit(`auth:register:${getClientIp(request)}`, {
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+    })
+
+    if (!rateLimit.success) {
+      const retryAfter = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000))
+      return NextResponse.json(
+        { success: false, error: 'Muitas tentativas. Tente novamente em instantes.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfter),
+          },
+        }
+      )
+    }
+
     const body = (await request.json()) as {
       nome?: string
       email?: string
@@ -63,12 +81,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error registering user:', error)
 
-    const message = isProductionJsonDataStore()
-      ? 'Cadastro indisponivel nesta configuracao online. Ative um banco de dados para salvar contas em producao.'
-      : 'Erro ao criar conta.'
-
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: error instanceof Error ? error.message : 'Erro ao criar conta.' },
       { status: 500 }
     )
   }

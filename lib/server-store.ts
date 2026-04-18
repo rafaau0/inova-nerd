@@ -136,6 +136,20 @@ export async function findUserById(userId: string) {
   return users.find((user) => user.id === userId) ?? null
 }
 
+export async function updateUserPasswordHash(userId: string, passwordHash: string) {
+  const users = await readUsers()
+  const nextUsers = users.map((user) =>
+    user.id === userId
+      ? {
+          ...user,
+          passwordHash,
+        }
+      : user
+  )
+
+  await writeUsers(nextUsers)
+}
+
 export async function readSessions(): Promise<SessionRecord[]> {
   return store.readSessions()
 }

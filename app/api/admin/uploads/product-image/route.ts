@@ -1,12 +1,6 @@
-import { mkdir, writeFile } from 'node:fs/promises'
-import path from 'node:path'
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { isProductionJsonDataStore } from '@/lib/data'
-
-function sanitizeFileName(name: string) {
-  return name.replace(/[^a-zA-Z0-9._-]/g, '-').toLowerCase()
-}
+import { uploadProductImage } from '@/lib/storage'
 
 export async function POST(request: Request) {
   await requireAdmin()
@@ -29,30 +23,23 @@ export async function POST(request: Request) {
       )
     }
 
-    const extension = path.extname(file.name) || '.png'
-    const baseName = path.basename(file.name, extension)
-    const safeName = sanitizeFileName(baseName)
-    const fileName = `${Date.now()}-${safeName}${extension.toLowerCase()}`
-    const relativeDir = path.join('uploads', 'products')
-    const absoluteDir = path.join(process.cwd(), 'public', relativeDir)
-    const absolutePath = path.join(absoluteDir, fileName)
-
-    await mkdir(absoluteDir, { recursive: true })
-    await writeFile(absolutePath, Buffer.from(await file.arrayBuffer()))
+    const uploaded = await uploadProductImage(file)
 
     return NextResponse.json({
       success: true,
       data: {
-        url: `/${relativeDir.replace(/\\/g, '/')}/${fileName}`,
+        url: uploaded.url,
+        provider: uploaded.provider,
       },
     })
   } catch (error) {
     console.error('Error uploading product image:', error)
-    const message = isProductionJsonDataStore()
-      ? 'Upload local de imagem nao e persistente na Vercel. Use storage externo para imagens em producao.'
-      : 'Nao foi possivel enviar a imagem.'
     return NextResponse.json(
-      { success: false, error: message },
+      {
+        success: false,
+        error:
+          error instanceof Error ? error.message : 'Nao foi possivel enviar a imagem.',
+      },
       { status: 500 }
     )
   }

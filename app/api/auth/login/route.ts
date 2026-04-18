@@ -1,9 +1,27 @@
 import { NextResponse } from 'next/server'
 import { loginUser } from '@/lib/auth'
-import { isProductionJsonDataStore } from '@/lib/data'
+import { consumeRateLimit, getClientIp } from '@/lib/rate-limit'
 
 export async function POST(request: Request) {
   try {
+    const rateLimit = consumeRateLimit(`auth:login:${getClientIp(request)}`, {
+      limit: 10,
+      windowMs: 15 * 60 * 1000,
+    })
+
+    if (!rateLimit.success) {
+      const retryAfter = Math.max(1, Math.ceil((rateLimit.resetAt - Date.now()) / 1000))
+      return NextResponse.json(
+        { success: false, error: 'Muitas tentativas. Tente novamente em instantes.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfter),
+          },
+        }
+      )
+    }
+
     const body = (await request.json()) as {
       email?: string
       password?: string
@@ -21,12 +39,8 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error logging user:', error)
 
-    const message = isProductionJsonDataStore()
-      ? 'Login indisponivel nesta configuracao online. Ative um banco de dados para contas persistentes em producao.'
-      : 'Erro ao entrar.'
-
     return NextResponse.json(
-      { success: false, error: message },
+      { success: false, error: error instanceof Error ? error.message : 'Erro ao entrar.' },
       { status: 500 }
     )
   }

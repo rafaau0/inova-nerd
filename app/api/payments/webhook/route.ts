@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server'
+import {
+  getMercadoPagoPayment,
+  verifyMercadoPagoWebhookSignature,
+} from '@/lib/mercadopago'
 import { updateOrderPayment } from '@/lib/server-store'
 
 interface MercadoPagoWebhookBody {
@@ -13,14 +17,25 @@ interface MercadoPagoWebhookBody {
 
 export async function POST(request: Request) {
   try {
+    if (!verifyMercadoPagoWebhookSignature(request)) {
+      return NextResponse.json({ received: false, error: 'Assinatura invalida.' }, { status: 401 })
+    }
+
     const body = (await request.json()) as MercadoPagoWebhookBody
-    const externalReference = body.data?.external_reference
-    const status = body.data?.status
+    const paymentId = body.data?.id ? String(body.data.id) : null
+
+    if (body.type !== 'payment' || !paymentId) {
+      return NextResponse.json({ received: true, ignored: true })
+    }
+
+    const payment = await getMercadoPagoPayment(paymentId)
+    const externalReference = payment.external_reference
+    const status = payment.status
 
     if (externalReference && status) {
       await updateOrderPayment(externalReference, {
         paymentProvider: 'mercado_pago',
-        paymentReferenceId: body.data?.id ? String(body.data.id) : null,
+        paymentReferenceId: payment.id ? String(payment.id) : paymentId,
         paymentStatus: status === 'approved' ? 'paid' : status === 'rejected' ? 'failed' : 'pending',
         status: status === 'approved' ? 'confirmed' : status === 'rejected' ? 'cancelled' : 'awaiting_payment',
       })

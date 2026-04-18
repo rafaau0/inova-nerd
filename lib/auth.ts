@@ -8,23 +8,21 @@ import {
   findUserByEmail,
   findUserById,
   toAuthUser,
+  updateUserPasswordHash,
 } from './server-store'
+import { getSessionSecret } from './env'
+import { hashPassword, needsPasswordRehash, signSha256, verifyPassword } from './security'
 import type { AuthUser, UserRecord } from './types'
 
 const SESSION_COOKIE = 'inovanerd_session'
 const SESSION_DURATION_DAYS = 7
-const SESSION_SECRET = process.env.SESSION_SECRET || 'inovanerd-local-session-secret'
-
-function hashPassword(password: string) {
-  return crypto.createHash('sha256').update(password).digest('hex')
-}
 
 function generateId(prefix: string) {
   return `${prefix}_${crypto.randomBytes(8).toString('hex')}`
 }
 
 function signSessionPayload(payload: string) {
-  return crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex')
+  return signSha256(payload, getSessionSecret())
 }
 
 function encodeSession(userId: string, expiresAt: string) {
@@ -100,11 +98,17 @@ export async function registerUser(input: {
 export async function loginUser(email: string, password: string) {
   const user = await findUserByEmail(email)
 
-  if (!user || user.passwordHash !== hashPassword(password)) {
+  if (!user || !verifyPassword(password, user.passwordHash)) {
     return {
       success: false as const,
       error: 'E-mail ou senha invalidos.',
     }
+  }
+
+  if (needsPasswordRehash(user.passwordHash)) {
+    const nextHash = hashPassword(password)
+    await updateUserPasswordHash(user.id, nextHash)
+    user.passwordHash = nextHash
   }
 
   const authUser = await createUserSession(user)

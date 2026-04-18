@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "db:setup": "node scripts/apply-db-schema.mjs",
     "db:migrate:json": "node scripts/migrate-json-to-db.mjs"
   },
   "dependencies": {

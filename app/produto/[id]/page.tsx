@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation'
 import { ProductDetailsClient } from '@/components/product-details-client'
 import { readProducts } from '@/lib/server-store'
 
+export const dynamic = 'force-dynamic'
+
 interface PageProps {
   params: Promise<{ id: string }>
 }

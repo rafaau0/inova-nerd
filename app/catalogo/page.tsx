@@ -1,6 +1,8 @@
 import { CatalogPageClient } from '@/components/catalog-page-client'
 import { readProducts } from '@/lib/server-store'
 
+export const dynamic = 'force-dynamic'
+
 interface CatalogPageProps {
   searchParams: Promise<{ categoria?: string }>
 }

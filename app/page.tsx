@@ -4,6 +4,8 @@ import { HeroSection } from '@/components/hero-section'
 import { ProductCard } from '@/components/product-card'
 import { readProducts } from '@/lib/server-store'
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const products = await readProducts()
   const featured = products.filter((product) => product.featured && product.stock > 0).slice(0, 4)

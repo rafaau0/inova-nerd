@@ -1,9 +1,10 @@
 import type { MetadataRoute } from 'next'
+import { getAppBaseUrl } from '@/lib/env'
 import { readProducts } from '@/lib/server-store'
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  const products = await readProducts()
+  const baseUrl = getAppBaseUrl()
+  const products = await readProducts().catch(() => [])
 
   const staticRoutes = ['', '/catalogo', '/favoritos', '/sobre', '/politica-de-troca', '/faq', '/contato']
     .map((route) => ({
