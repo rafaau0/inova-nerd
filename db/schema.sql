@@ -1,4 +1,4 @@
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id BIGINT PRIMARY KEY,
   name TEXT NOT NULL,
   anime TEXT NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE products (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE coupons (
+CREATE TABLE IF NOT EXISTS coupons (
   code TEXT PRIMARY KEY,
   pct NUMERIC(5, 2) NOT NULL,
   min_value NUMERIC(10, 2),
@@ -31,7 +31,7 @@ CREATE TABLE coupons (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   nome TEXT NOT NULL,
   email TEXT NOT NULL UNIQUE,
@@ -50,14 +50,14 @@ CREATE TABLE users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
   token TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
   id TEXT PRIMARY KEY,
   created_at TIMESTAMPTZ NOT NULL,
   status TEXT NOT NULL,
@@ -72,7 +72,7 @@ CREATE TABLE orders (
   totals JSONB NOT NULL
 );
 
-CREATE TABLE order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id BIGSERIAL PRIMARY KEY,
   order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
   product_id BIGINT NOT NULL,
@@ -82,6 +82,6 @@ CREATE TABLE order_items (
   price NUMERIC(10, 2) NOT NULL
 );
 
-CREATE INDEX idx_orders_user_id ON orders(user_id);
-CREATE INDEX idx_orders_status ON orders(status);
-CREATE INDEX idx_products_category ON products(category);
+CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
+CREATE INDEX IF NOT EXISTS idx_products_category ON products(category);
