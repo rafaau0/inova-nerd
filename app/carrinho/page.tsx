@@ -1,14 +1,14 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Lock, Minus, Plus, ShoppingCart, Tag, Trash2 } from 'lucide-react'
 import { useCart } from '@/components/cart-provider'
 import { useToast } from '@/components/toast-provider'
 import { CheckoutModal } from '@/components/checkout-modal'
+import { useAuth } from '@/components/auth-provider'
 import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
-import type { AuthUser } from '@/lib/types'
 
 export default function CartPage() {
   const {
@@ -21,41 +21,11 @@ export default function CartPage() {
     applyCoupon,
     removeCoupon,
   } = useCart()
+  const { user: currentUser } = useAuth()
   const { showToast } = useToast()
   const [couponInput, setCouponInput] = useState('')
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false)
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false)
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadUser = async () => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          cache: 'no-store',
-          signal: controller.signal,
-        })
-        if (!response.ok) {
-          setCurrentUser(null)
-          return
-        }
-
-        const result = (await response.json()) as { user: AuthUser | null }
-        setCurrentUser(result.user)
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        setCurrentUser(null)
-      }
-    }
-
-    void loadUser()
-
-    return () => {
-      controller.abort()
-    }
-  }, [])
-
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) {
       showToast('Digite um codigo de cupom.', 'error')

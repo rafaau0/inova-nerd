@@ -5,11 +5,22 @@ const CART_KEY = 'inovanerd_cart'
 const WISHLIST_KEY = 'inovanerd_wishlist'
 const CART_EXPIRY_MS = 24 * 60 * 60 * 1000
 
-export function loadCart(): CartItem[] {
+function getCartKey(ownerId: string) {
+  return `${CART_KEY}:${ownerId}`
+}
+
+export function clearLegacyGuestCart(): void {
+  if (typeof window === 'undefined') return
+
+  localStorage.removeItem(CART_KEY)
+}
+
+export function loadCart(ownerId?: string | null): CartItem[] {
   if (typeof window === 'undefined') return []
+  if (!ownerId) return []
 
   try {
-    const raw = localStorage.getItem(CART_KEY)
+    const raw = localStorage.getItem(getCartKey(ownerId))
     if (!raw) return []
 
     const { items, timestamp } = JSON.parse(raw) as {
@@ -18,7 +29,7 @@ export function loadCart(): CartItem[] {
     }
 
     if (Date.now() - timestamp > CART_EXPIRY_MS) {
-      localStorage.removeItem(CART_KEY)
+      localStorage.removeItem(getCartKey(ownerId))
       return []
     }
 
@@ -28,10 +39,14 @@ export function loadCart(): CartItem[] {
   }
 }
 
-export function saveCart(items: CartItem[]): void {
+export function saveCart(items: CartItem[], ownerId?: string | null): void {
   if (typeof window === 'undefined') return
+  if (!ownerId) return
 
-  localStorage.setItem(CART_KEY, JSON.stringify({ items, timestamp: Date.now() }))
+  localStorage.setItem(
+    getCartKey(ownerId),
+    JSON.stringify({ items, timestamp: Date.now() })
+  )
 }
 
 export function addToCart(

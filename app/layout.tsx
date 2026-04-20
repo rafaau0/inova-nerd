@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Analytics } from '@vercel/analytics/next'
+import { AuthProvider } from '@/components/auth-provider'
 import { CartProvider } from '@/components/cart-provider'
 import { Footer } from '@/components/footer'
 import { Navbar } from '@/components/navbar'
@@ -59,11 +60,13 @@ export default function RootLayout({
     <html lang="pt-BR" data-scroll-behavior="smooth">
       <body className="font-sans antialiased bg-background text-foreground">
         <ToastProvider>
-          <CartProvider>
-            <Navbar />
-            {children}
-            <Footer />
-          </CartProvider>
+          <AuthProvider>
+            <CartProvider>
+              <Navbar />
+              {children}
+              <Footer />
+            </CartProvider>
+          </AuthProvider>
         </ToastProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

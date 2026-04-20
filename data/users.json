@@ -5,7 +5,7 @@
     "email": "admin@inovanerd.com.br",
     "cpf": "",
     "telefone": "",
-    "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+    "passwordHash": "scrypt$bf0ff4066c1acc05b30194cc6a868023$a0dd2a565cfa9b25715b8bece3e8f5f263383fcd17d39c88432c0523a900506dc7f33b8108aa1f2681909de17083d60dd05b0fe94dcfb95b6b3392a583fd33a4",
     "role": "admin",
     "createdAt": "2026-04-17T00:00:00.000Z"
   }

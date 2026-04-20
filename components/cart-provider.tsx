@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { CartItem, Coupon, Product, ShippingDestination } from '@/lib/types'
+import { useAuth } from './auth-provider'
 import {
   loadCart,
   saveCart,
@@ -20,6 +21,7 @@ import {
   loadWishlist,
   saveWishlist,
   toggleWishlistItem,
+  clearLegacyGuestCart,
 } from '@/lib/cart-store'
 
 interface CouponResult {
@@ -34,7 +36,7 @@ interface CartContextType {
   shippingDestination: ShippingDestination | null
   cartCount: number
   totals: ReturnType<typeof getCartTotals>
-  addToCart: (product: Product, qty?: number, size?: string | null) => void
+  addToCart: (product: Product, qty?: number, size?: string | null) => boolean
   removeFromCart: (key: string) => void
   updateQty: (key: string, delta: number) => void
   applyCoupon: (code: string) => Promise<CouponResult>
@@ -48,26 +50,36 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { user, isLoading: isAuthLoading } = useAuth()
   const [cart, setCart] = useState<CartItem[]>([])
   const [coupon, setCoupon] = useState<Coupon | null>(null)
   const [wishlist, setWishlist] = useState<number[]>([])
   const [shippingDestination, setShippingDestination] = useState<ShippingDestination | null>(null)
   const [hasLoadedLocalState, setHasLoadedLocalState] = useState(false)
+  const currentUserId = user?.id ?? null
 
   useEffect(() => {
+    if (isAuthLoading) return
+
     const timeout = window.setTimeout(() => {
-      setCart(loadCart())
+      setCart(currentUserId ? loadCart(currentUserId) : [])
       setWishlist(loadWishlist())
       setHasLoadedLocalState(true)
+
+      if (!currentUserId) {
+        clearLegacyGuestCart()
+      }
     }, 0)
 
-    return () => window.clearTimeout(timeout)
-  }, [])
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [currentUserId, isAuthLoading])
 
   useEffect(() => {
-    if (!hasLoadedLocalState) return
-    saveCart(cart)
-  }, [cart, hasLoadedLocalState])
+    if (!hasLoadedLocalState || !currentUserId) return
+    saveCart(cart, currentUserId)
+  }, [cart, hasLoadedLocalState, currentUserId])
 
   useEffect(() => {
     if (!hasLoadedLocalState) return
@@ -75,8 +87,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [wishlist, hasLoadedLocalState])
 
   const addToCart = useCallback((product: Product, qty = 1, size: string | null = null) => {
+    if (!currentUserId) return false
     setCart((prev) => addToCartFn(prev, product, qty, size))
-  }, [])
+    return true
+  }, [currentUserId])
 
   const removeFromCart = useCallback((key: string) => {
     setCart((prev) => removeFromCartFn(prev, key))

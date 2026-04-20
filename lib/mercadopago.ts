@@ -28,7 +28,7 @@ function getMercadoPagoApiBaseUrl() {
   return 'https://api.mercadopago.com'
 }
 
-function canUseWebhookUrl(baseUrl: string) {
+function canUsePublicHttpsUrl(baseUrl: string) {
   try {
     const url = new URL(baseUrl)
     return url.protocol === 'https:' && !['localhost', '127.0.0.1'].includes(url.hostname)
@@ -69,6 +69,7 @@ export async function createCheckoutPreference(input: {
   const client = createMercadoPagoClient()
   const preference = new Preference(client)
   const baseUrl = getAppBaseUrl()
+  const hasPublicHttpsUrl = canUsePublicHttpsUrl(baseUrl)
   let timeout: ReturnType<typeof setTimeout> | null = null
 
   try {
@@ -98,10 +99,8 @@ export async function createCheckoutPreference(input: {
           pending: `${baseUrl}/checkout/retorno?status=pending&order_id=${input.orderId}`,
           failure: `${baseUrl}/checkout/retorno?status=failure&order_id=${input.orderId}`,
         },
-        auto_return: 'approved',
-        ...(canUseWebhookUrl(baseUrl)
-          ? { notification_url: `${baseUrl}/api/payments/webhook` }
-          : {}),
+        ...(hasPublicHttpsUrl ? { auto_return: 'approved' } : {}),
+        ...(hasPublicHttpsUrl ? { notification_url: `${baseUrl}/api/payments/webhook` } : {}),
         statement_descriptor: 'INOVANERD',
       },
     })

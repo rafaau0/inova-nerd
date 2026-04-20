@@ -5,9 +5,9 @@ import { track } from '@vercel/analytics'
 import { CreditCard, FileText, QrCode, X } from 'lucide-react'
 import { useCart } from './cart-provider'
 import { useToast } from './toast-provider'
+import { useAuth } from './auth-provider'
 import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
 import type {
-  AuthUser,
   CartTotals,
   CustomerInfo,
   PaymentMethod,
@@ -85,6 +85,7 @@ const CHECKOUT_REQUEST_TIMEOUT_MS = 20000
 
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { cart, coupon, totals, clearCart, setShippingDestination } = useCart()
+  const { user: currentUser } = useAuth()
   const { showToast } = useToast()
   const [step, setStep] = useState(1)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('credit_card')
@@ -94,7 +95,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [isLoadingShipping, setIsLoadingShipping] = useState(false)
   const [shippingTotals, setShippingTotals] = useState<CartTotals | null>(null)
   const [shippingQuote, setShippingQuote] = useState<ShippingQuote | null>(null)
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
   const modalRef = useRef<HTMLDivElement>(null)
 
   const [customer, setCustomer] = useState<CustomerInfo>({
@@ -112,59 +112,29 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   })
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || !currentUser) return
 
-    let cancelled = false
-    const controller = new AbortController()
-
-    const loadCurrentUser = async () => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          cache: 'no-store',
-          signal: controller.signal,
-        })
-        if (!response.ok) {
-          if (!cancelled) {
-            setCurrentUser(null)
-          }
-          return
-        }
-
-        const result = (await response.json()) as { user: AuthUser | null }
-        if (cancelled) return
-
-        setCurrentUser(result.user)
-        if (!result.user) return
-
-        setCustomer((prev) => ({
-          ...prev,
-          nome: prev.nome || result.user?.nome || '',
-          email: prev.email || result.user?.email || '',
-          cpf: prev.cpf || result.user?.cpf || '',
-          telefone: prev.telefone || result.user?.telefone || '',
-          cep: prev.cep || result.user?.cep || '',
-          endereco: prev.endereco || result.user?.endereco || '',
-          numero: prev.numero || result.user?.numero || '',
-          complemento: prev.complemento || result.user?.complemento || '',
-          bairro: prev.bairro || result.user?.bairro || '',
-          cidade: prev.cidade || result.user?.cidade || '',
-          estado: prev.estado || result.user?.estado || '',
-        }))
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        if (!cancelled) {
-          setCurrentUser(null)
-        }
-      }
-    }
-
-    void loadCurrentUser()
+    const timeout = window.setTimeout(() => {
+      setCustomer((prev) => ({
+        ...prev,
+        nome: prev.nome || currentUser.nome || '',
+        email: prev.email || currentUser.email || '',
+        cpf: prev.cpf || currentUser.cpf || '',
+        telefone: prev.telefone || currentUser.telefone || '',
+        cep: prev.cep || currentUser.cep || '',
+        endereco: prev.endereco || currentUser.endereco || '',
+        numero: prev.numero || currentUser.numero || '',
+        complemento: prev.complemento || currentUser.complemento || '',
+        bairro: prev.bairro || currentUser.bairro || '',
+        cidade: prev.cidade || currentUser.cidade || '',
+        estado: prev.estado || currentUser.estado || '',
+      }))
+    }, 0)
 
     return () => {
-      cancelled = true
-      controller.abort()
+      window.clearTimeout(timeout)
     }
-  }, [isOpen])
+  }, [isOpen, currentUser])
 
   const resetState = () => {
     setStep(1)

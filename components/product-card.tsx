@@ -2,7 +2,6 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { track } from '@vercel/analytics'
 import { Heart } from 'lucide-react'
 import type { Product } from '@/lib/types'
 import { useCart } from './cart-provider'
@@ -20,32 +19,10 @@ const badgeMap = {
 }
 
 export function ProductCard({ product, delay = 0 }: ProductCardProps) {
-  const { addToCart, toggleWishlist, isInWishlist } = useCart()
+  const { toggleWishlist, isInWishlist } = useCart()
   const { showToast } = useToast()
   const inWishlist = isInWishlist(product.id)
   const isOutOfStock = product.stock <= 0
-
-  const handleQuickAdd = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    if (isOutOfStock) {
-      showToast('Produto sem estoque no momento.', 'error')
-      return
-    }
-
-    if (product.sizes.length > 0) {
-      showToast('Selecione o tamanho na pagina do produto.', 'info')
-      return
-    }
-
-    addToCart(product)
-    track('add_to_cart', {
-      productId: product.id,
-      productName: product.name,
-    })
-    showToast(`${product.name} adicionado ao carrinho.`, 'success')
-  }
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -117,13 +94,6 @@ export function ProductCard({ product, delay = 0 }: ProductCardProps) {
               </div>
             )}
           </div>
-          <button
-            onClick={handleQuickAdd}
-            disabled={isOutOfStock}
-            className="bg-gradient-to-br from-purple to-purple-light text-white border-none px-4 py-2 rounded-lg text-sm font-bold transition-all hover:from-orange-dark hover:to-orange hover:text-background hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isOutOfStock ? 'Sem estoque' : '+ Carrinho'}
-          </button>
         </div>
         <div className="mt-3 text-xs text-muted-foreground">
           {isOutOfStock ? 'Produto indisponivel.' : `${product.stock} unidade(s) em estoque`}

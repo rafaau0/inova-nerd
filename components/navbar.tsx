@@ -4,18 +4,17 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, Menu, ShoppingCart, User, X } from 'lucide-react'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useCart } from './cart-provider'
+import { useAuth } from './auth-provider'
 import { IMAGES } from '@/lib/assets'
-import type { AuthUser } from '@/lib/types'
 
 export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
-  const { cartCount, wishlist } = useCart()
+  const { user: currentUser, setUser } = useAuth()
+  const { cartCount, wishlist, clearCart } = useCart()
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,44 +25,6 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  useEffect(() => {
-    const controller = new AbortController()
-
-    const loadUser = async (signal?: AbortSignal) => {
-      try {
-        const response = await fetch('/api/auth/me', {
-          cache: 'no-store',
-          signal,
-        })
-        if (!response.ok) {
-          setCurrentUser(null)
-          return
-        }
-
-        const result = (await response.json()) as { user: AuthUser | null }
-        setCurrentUser(result.user)
-      } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') return
-        setCurrentUser(null)
-      }
-    }
-
-    const syncUser = () => {
-      void loadUser()
-    }
-
-    void loadUser(controller.signal)
-
-    window.addEventListener('focus', syncUser)
-    document.addEventListener('visibilitychange', syncUser)
-
-    return () => {
-      controller.abort()
-      window.removeEventListener('focus', syncUser)
-      document.removeEventListener('visibilitychange', syncUser)
-    }
-  }, [pathname])
-
   const accountHref = useMemo(() => {
     if (!currentUser) return '/entrar'
     return currentUser.role === 'admin' ? '/admin' : '/minha-conta'
@@ -71,7 +32,8 @@ export function Navbar() {
 
   const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' })
-    setCurrentUser(null)
+    clearCart()
+    setUser(null)
     router.push('/')
     router.refresh()
   }

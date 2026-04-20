@@ -52,7 +52,12 @@ export function ProductDetailsClient({
       return
     }
 
-    addToCart(product, qty, selectedSize)
+    const added = addToCart(product, qty, selectedSize)
+    if (!added) {
+      showToast('Entre na sua conta para adicionar produtos ao carrinho.', 'info')
+      return
+    }
+
     showToast(`${product.name} adicionado ao carrinho.`, 'success')
   }
 
