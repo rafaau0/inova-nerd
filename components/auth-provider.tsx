@@ -21,9 +21,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+export function AuthProvider({
+  children,
+  initialUser = null,
+}: {
+  children: ReactNode
+  initialUser?: AuthUser | null
+}) {
+  const [user, setUser] = useState<AuthUser | null>(initialUser)
+  const [isLoading, setIsLoading] = useState(false)
   const requestIdRef = useRef(0)
 
   const refreshUser = useCallback(async () => {
@@ -60,22 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(nextUser)
     setIsLoading(false)
   }, [])
-
-  useEffect(() => {
-    let cancelled = false
-
-    const load = async () => {
-      if (!cancelled) {
-        await refreshUser()
-      }
-    }
-
-    void load()
-
-    return () => {
-      cancelled = true
-    }
-  }, [refreshUser])
 
   useEffect(() => {
     const handleFocus = () => {

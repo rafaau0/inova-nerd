@@ -5,6 +5,7 @@ import { CartProvider } from '@/components/cart-provider'
 import { Footer } from '@/components/footer'
 import { Navbar } from '@/components/navbar'
 import { ToastProvider } from '@/components/toast-provider'
+import { getCurrentUser } from '@/lib/auth'
 import './globals.css'
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -51,16 +52,18 @@ export const viewport: Viewport = {
   maximumScale: 5,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const initialUser = await getCurrentUser()
+
   return (
     <html lang="pt-BR" data-scroll-behavior="smooth">
       <body className="font-sans antialiased bg-background text-foreground">
         <ToastProvider>
-          <AuthProvider>
+          <AuthProvider initialUser={initialUser}>
             <CartProvider>
               <Navbar />
               {children}
