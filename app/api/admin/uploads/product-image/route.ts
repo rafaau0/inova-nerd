@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { uploadProductImage } from '@/lib/storage'
+import { getProductImageValidationError, uploadProductImage } from '@/lib/storage'
 
 export async function POST(request: Request) {
   await requireAdmin()
@@ -16,9 +16,10 @@ export async function POST(request: Request) {
       )
     }
 
-    if (!file.type.startsWith('image/')) {
+    const validationError = getProductImageValidationError(file)
+    if (validationError) {
       return NextResponse.json(
-        { success: false, error: 'Envie apenas imagens.' },
+        { success: false, error: validationError },
         { status: 400 }
       )
     }

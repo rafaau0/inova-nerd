@@ -4,6 +4,14 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { getFileStorageProvider, isProductionEnvironment, isSupabaseStorageConfigured } from './env'
 
+const MAX_PRODUCT_IMAGE_BYTES = 5 * 1024 * 1024
+const ALLOWED_PRODUCT_IMAGE_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/avif',
+])
+
 function sanitizeFileName(name: string) {
   return name.replace(/[^a-zA-Z0-9._-]/g, '-').toLowerCase()
 }
@@ -64,7 +72,28 @@ async function uploadToSupabaseStorage(file: File) {
   }
 }
 
+export function getProductImageValidationError(file: File) {
+  if (file.size <= 0) {
+    return 'A imagem enviada esta vazia.'
+  }
+
+  if (file.size > MAX_PRODUCT_IMAGE_BYTES) {
+    return 'A imagem deve ter no maximo 5 MB.'
+  }
+
+  if (!ALLOWED_PRODUCT_IMAGE_TYPES.has(file.type)) {
+    return 'Envie uma imagem JPG, PNG, WebP ou AVIF.'
+  }
+
+  return null
+}
+
 export async function uploadProductImage(file: File) {
+  const validationError = getProductImageValidationError(file)
+  if (validationError) {
+    throw new Error(validationError)
+  }
+
   const provider = getFileStorageProvider()
 
   if (provider === 'supabase') {

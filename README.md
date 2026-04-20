@@ -83,7 +83,9 @@ Para producao, use `.env.production.example` como referencia.
 - O webhook do Mercado Pago valida a assinatura `x-signature` e consulta o pagamento na API antes de atualizar o pedido.
 - Login e cadastro agora usam hash `scrypt` e migram hashes antigos automaticamente no proximo login.
 - O upload de imagens aceita `FILE_STORAGE_PROVIDER=supabase` com bucket publico no Supabase Storage.
+- O upload de imagens de produto aceita JPG, PNG, WebP ou AVIF com limite de 5 MB.
 - `/api/health` retorna `503` quando faltarem dependencias criticas de producao.
+- `/api/health` tambem informa quando os Correios nao estao configurados; nesse caso o checkout usa a estimativa local de frete.
 
 ## Deploy
 

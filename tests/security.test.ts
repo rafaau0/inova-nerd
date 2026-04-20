@@ -23,4 +23,11 @@ describe('security', () => {
     expect(verifyPassword(password, legacyHash)).toBe(true)
     expect(needsPasswordRehash(legacyHash)).toBe(true)
   })
+
+  it('rejects malformed password hashes without throwing', () => {
+    expect(verifyPassword('SenhaSegura123', 'not-a-hex-hash')).toBe(false)
+    expect(verifyPassword('SenhaSegura123', `scrypt$salt$${'z'.repeat(128)}`)).toBe(
+      false
+    )
+  })
 })

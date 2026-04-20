@@ -3,6 +3,7 @@ import 'server-only'
 import crypto from 'node:crypto'
 import { MercadoPagoConfig, Preference } from 'mercadopago'
 import { getAppBaseUrl, getMercadoPagoWebhookSecret, isProductionEnvironment } from './env'
+import { timingSafeEqualHex } from './security'
 import type { PaymentMethod } from './types'
 
 function getMercadoPagoToken() {
@@ -142,14 +143,7 @@ export function verifyMercadoPagoWebhookSignature(request: Request) {
     .update(manifest)
     .digest('hex')
 
-  if (expectedSignature.length !== parsedSignature.signature.length) {
-    return false
-  }
-
-  return crypto.timingSafeEqual(
-    Buffer.from(expectedSignature, 'hex'),
-    Buffer.from(parsedSignature.signature, 'hex')
-  )
+  return timingSafeEqualHex(expectedSignature, parsedSignature.signature)
 }
 
 type MercadoPagoPaymentApiResponse = {

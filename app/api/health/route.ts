@@ -8,6 +8,7 @@ import {
 } from '@/lib/env'
 import { isJsonDataStore } from '@/lib/data'
 import { isStorageHealthy } from '@/lib/storage'
+import { hasCorreiosCredentials } from '@/lib/correios'
 
 export async function GET() {
   const checks: Record<string, { ok: boolean; message?: string }> = {}
@@ -67,6 +68,13 @@ export async function GET() {
       process.env.NEXT_PUBLIC_APP_URL || process.env.APP_URL
         ? 'URL base configurada.'
         : 'NEXT_PUBLIC_APP_URL nao configurada.',
+  }
+
+  checks.correios = {
+    ok: true,
+    message: hasCorreiosCredentials()
+      ? 'Credenciais dos Correios configuradas para frete em tempo real.'
+      : 'Correios nao configurado. O checkout usara a estimativa local de frete.',
   }
 
   const ok = Object.values(checks).every((check) => check.ok)

@@ -7,12 +7,27 @@ function sha256(value: string) {
   return crypto.createHash('sha256').update(value).digest('hex')
 }
 
-function timingSafeEqualHex(a: string, b: string) {
+function isHexString(value: string) {
+  return /^[a-f0-9]+$/i.test(value)
+}
+
+export function timingSafeEqualHex(a: string, b: string) {
   if (a.length !== b.length) {
     return false
   }
 
-  return crypto.timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'))
+  if (!isHexString(a) || !isHexString(b)) {
+    return false
+  }
+
+  const left = Buffer.from(a, 'hex')
+  const right = Buffer.from(b, 'hex')
+
+  if (left.length !== right.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(left, right)
 }
 
 export function hashPassword(password: string) {
