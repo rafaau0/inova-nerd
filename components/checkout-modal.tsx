@@ -418,9 +418,9 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     <div
       ref={modalRef}
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-[9999] bg-background/80 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 p-3 backdrop-blur-sm sm:p-4"
     >
-      <div className="bg-card border border-border rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-card shadow-2xl">
         <div className="flex items-center justify-between p-5 border-b border-border">
           <h2 className="font-display text-xl tracking-wide text-foreground">
             {step === 1 && 'IDENTIFICACAO'}
@@ -438,12 +438,12 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           {step === 1 && (
             <div className="space-y-4">
               <p className="text-muted-foreground text-sm mb-4">Seus dados de entrega</p>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-foreground">Nome</label>
                   <input
@@ -466,7 +466,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-foreground">CPF</label>
                   <input
@@ -520,8 +520,8 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="sm:col-span-2">
                   <label className="text-sm font-medium text-foreground">Endereco</label>
                   <input
                     type="text"
@@ -569,7 +569,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-foreground">Cidade</label>
                   <input
@@ -611,7 +611,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 Escolha a forma de pagamento para abrir o Checkout Pro do Mercado Pago.
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {paymentOptions.map((option) => {
                   const Icon = option.icon
 
@@ -675,10 +675,10 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 </div>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   onClick={() => setStep(1)}
-                  className="px-6 py-3 border-2 border-border text-foreground font-bold rounded-xl hover:border-muted-foreground transition-all"
+                  className="px-6 py-3 border-2 border-border text-foreground font-bold rounded-xl hover:border-muted-foreground transition-all sm:w-auto"
                 >
                   Voltar
                 </button>

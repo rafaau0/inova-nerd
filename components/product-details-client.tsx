@@ -71,7 +71,7 @@ export function ProductDetailsClient({
 
   return (
     <main className="pt-[72px]">
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         <Link
           href="/catalogo"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-orange transition-colors mb-8"
@@ -80,7 +80,7 @@ export function ProductDetailsClient({
           Voltar
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+        <div className="mb-16 grid grid-cols-1 gap-8 lg:mb-20 lg:grid-cols-2 lg:gap-12">
           <div className="relative aspect-square rounded-3xl overflow-hidden bg-card border border-border">
             {product.image ? (
               <Image src={product.image} alt={product.name} fill className="object-cover" priority />
@@ -114,8 +114,8 @@ export function ProductDetailsClient({
 
             <p className="text-muted-foreground leading-relaxed mb-8">{product.description}</p>
 
-            <div className="flex items-center gap-4 mb-4">
-              <span className="font-condensed text-4xl font-bold text-orange">
+            <div className="mb-4 flex flex-wrap items-center gap-3 sm:gap-4">
+              <span className="font-condensed text-3xl font-bold text-orange sm:text-4xl">
                 R$ {product.price.toFixed(2).replace('.', ',')}
               </span>
               {product.oldPrice && (
@@ -178,7 +178,7 @@ export function ProductDetailsClient({
               </div>
             </div>
 
-            <div className="flex gap-4 mb-8">
+            <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:gap-4">
               <button
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
@@ -189,7 +189,7 @@ export function ProductDetailsClient({
               </button>
               <button
                 onClick={handleWishlist}
-                className={`w-14 h-14 rounded-xl border flex items-center justify-center transition-all ${
+                className={`h-14 w-full rounded-xl border flex items-center justify-center transition-all sm:w-14 ${
                   inWishlist
                     ? 'bg-red-500/10 border-red-500/30 text-red-500'
                     : 'bg-card border-border text-muted-foreground hover:border-red-500 hover:text-red-500'

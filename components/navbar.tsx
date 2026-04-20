@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Heart, Menu, ShoppingCart, User, X } from 'lucide-react'
+import { Heart, LogOut, Menu, ShoppingCart, User, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCart } from './cart-provider'
 import { useAuth } from './auth-provider'
@@ -31,11 +31,15 @@ export function Navbar() {
   }, [currentUser])
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    clearCart()
-    setUser(null)
-    router.push('/')
-    router.refresh()
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } finally {
+      clearCart()
+      setUser(null)
+      setMenuOpen(false)
+      router.push('/')
+      router.refresh()
+    }
   }
 
   return (
@@ -44,8 +48,8 @@ export function Navbar() {
         scrolled ? 'bg-background/98 shadow-xl' : 'bg-background/85 backdrop-blur-xl'
       } border-b border-border`}
     >
-      <div className="max-w-7xl mx-auto px-6 h-[72px] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[72px] flex items-center justify-between gap-3">
+        <Link href="/" className="flex min-w-0 items-center gap-2">
           <Image
             src={IMAGES.logo}
             alt="INOVANERD"
@@ -53,16 +57,16 @@ export function Navbar() {
             height={50}
             className="drop-shadow-[0_0_1px_var(--orange)]"
           />
-          <span className="font-display text-2xl tracking-[3px] text-foreground">
+          <span className="font-display text-xl tracking-[2px] text-foreground sm:text-2xl sm:tracking-[3px]">
             INOVA<span className="text-orange">NERD</span>
           </span>
         </Link>
 
-        <ul className="hidden md:flex items-center gap-2">
+        <ul className="hidden lg:flex items-center gap-1 xl:gap-2">
           <li>
             <Link
               href="/"
-              className="px-4 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all"
+              className="px-3 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all xl:px-4"
             >
               Home
             </Link>
@@ -70,7 +74,7 @@ export function Navbar() {
           <li>
             <Link
               href="/catalogo"
-              className="px-4 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all"
+              className="px-3 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all xl:px-4"
             >
               Catalogo
             </Link>
@@ -78,7 +82,7 @@ export function Navbar() {
           <li>
             <Link
               href="/favoritos"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all xl:px-4"
             >
               <Heart className="w-4 h-4" />
               Favoritos
@@ -88,7 +92,7 @@ export function Navbar() {
           <li>
             <Link
               href="/carrinho"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold bg-orange/10 border border-orange/30 text-orange hover:bg-orange/20 transition-all"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg font-semibold bg-orange/10 border border-orange/30 text-orange hover:bg-orange/20 transition-all xl:px-4"
             >
               <ShoppingCart className="w-4 h-4" />
               Carrinho
@@ -100,25 +104,28 @@ export function Navbar() {
           <li>
             <Link
               href={accountHref}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all"
+              className="flex max-w-[160px] items-center gap-2 rounded-lg px-3 py-2 font-semibold text-muted-foreground transition-all hover:bg-purple/30 hover:text-foreground xl:max-w-[190px] xl:px-4"
             >
               <User className="w-4 h-4" />
-              {currentUser ? currentUser.nome.split(' ')[0] : 'Entrar'}
+              <span className="truncate">
+                {currentUser ? currentUser.nome.split(' ')[0] : 'Entrar'}
+              </span>
             </Link>
           </li>
           {currentUser && (
             <li>
               <button
                 onClick={logout}
-                className="px-4 py-2 rounded-lg font-semibold text-muted-foreground hover:text-foreground hover:bg-purple/30 transition-all"
+                className="flex items-center gap-2 rounded-lg border border-red-500/30 px-3 py-2 font-semibold text-red-300 transition-all hover:border-red-400 hover:bg-red-500/10 hover:text-red-200 xl:px-4"
               >
+                <LogOut className="h-4 w-4" />
                 Sair
               </button>
             </li>
           )}
         </ul>
 
-        <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
+        <button className="p-2 lg:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Menu">
           {menuOpen ? (
             <X className="w-6 h-6 text-foreground" />
           ) : (
@@ -128,19 +135,19 @@ export function Navbar() {
       </div>
 
       {menuOpen && (
-        <div className="md:hidden bg-card border-t border-border">
-          <div className="px-6 py-4 flex flex-col gap-2">
+        <div className="border-t border-border bg-card shadow-2xl lg:hidden">
+          <div className="flex flex-col gap-2 px-4 py-4 sm:px-6">
             {[
               ['/', 'Home'],
               ['/catalogo', 'Catalogo'],
               ['/favoritos', 'Favoritos'],
               ['/carrinho', `Carrinho (${cartCount})`],
-              [accountHref, currentUser ? currentUser.nome.split(' ')[0] : 'Entrar'],
+              [accountHref, currentUser ? 'Minha conta' : 'Entrar'],
             ].map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
-                className="px-4 py-3 rounded-lg font-semibold text-foreground hover:bg-purple/30 transition-all"
+                className="rounded-lg px-4 py-3 font-semibold text-foreground transition-all hover:bg-purple/30"
                 onClick={() => setMenuOpen(false)}
               >
                 {label}
@@ -149,11 +156,11 @@ export function Navbar() {
             {currentUser && (
               <button
                 onClick={() => {
-                  setMenuOpen(false)
                   void logout()
                 }}
-                className="px-4 py-3 rounded-lg font-semibold text-left text-foreground hover:bg-purple/30 transition-all"
+                className="flex items-center gap-2 rounded-lg border border-red-500/30 px-4 py-3 text-left font-semibold text-red-300 transition-all hover:bg-red-500/10"
               >
+                <LogOut className="h-4 w-4" />
                 Sair
               </button>
             )}

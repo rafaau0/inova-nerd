@@ -89,7 +89,7 @@ export function CatalogPageClient({
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-9">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-9 px-4 py-10 sm:px-6 sm:py-12 lg:grid-cols-[260px_1fr]">
         <aside className="bg-card border border-border rounded-2xl p-6 h-fit lg:sticky lg:top-[96px]">
           <div className="mb-8">
             <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-4 pb-3 border-b border-border">
@@ -175,12 +175,12 @@ export function CatalogPageClient({
               {filteredProducts.length} produto{filteredProducts.length !== 1 ? 's' : ''}{' '}
               encontrado{filteredProducts.length !== 1 ? 's' : ''}
             </span>
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div className="flex w-full min-w-0 flex-col gap-3 sm:flex-row md:w-auto">
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Buscar por nome, anime ou tag"
-                className="bg-card border border-border rounded-lg px-4 py-2 text-foreground min-w-[260px]"
+                className="w-full min-w-0 rounded-lg border border-border bg-card px-4 py-2 text-foreground sm:min-w-[260px]"
               />
               <select
                 value={filters.sortBy}
@@ -190,7 +190,7 @@ export function CatalogPageClient({
                     sortBy: event.target.value as typeof prev.sortBy,
                   }))
                 }
-                className="bg-card border border-border rounded-lg px-4 py-2 text-foreground cursor-pointer focus:border-orange focus:outline-none"
+                className="w-full cursor-pointer rounded-lg border border-border bg-card px-4 py-2 text-foreground focus:border-orange focus:outline-none sm:w-auto"
               >
                 <option value="default">Ordenar por</option>
                 <option value="price-asc">Menor preco</option>
