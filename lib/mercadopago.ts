@@ -6,6 +6,8 @@ import { getAppBaseUrl, getMercadoPagoWebhookSecret, isProductionEnvironment } f
 import { timingSafeEqualHex } from './security'
 import type { PaymentMethod } from './types'
 
+const MERCADO_PAGO_REQUEST_TIMEOUT_MS = 20000
+
 function getMercadoPagoToken() {
   const accessToken = process.env.MP_ACCESS_TOKEN
 
@@ -24,6 +26,15 @@ export function createMercadoPagoClient() {
 
 function getMercadoPagoApiBaseUrl() {
   return 'https://api.mercadopago.com'
+}
+
+function canUseWebhookUrl(baseUrl: string) {
+  try {
+    const url = new URL(baseUrl)
+    return url.protocol === 'https:' && !['localhost', '127.0.0.1'].includes(url.hostname)
+  } catch {
+    return false
+  }
 }
 
 function getExcludedPaymentTypes(method: PaymentMethod) {
@@ -58,34 +69,49 @@ export async function createCheckoutPreference(input: {
   const client = createMercadoPagoClient()
   const preference = new Preference(client)
   const baseUrl = getAppBaseUrl()
+  let timeout: ReturnType<typeof setTimeout> | null = null
 
-  const response = await preference.create({
-    body: {
-      external_reference: input.orderId,
-      items: input.items.map((item) => ({
-        ...item,
-        currency_id: 'BRL',
-      })),
-      payer: {
-        name: input.customer.nome,
-        email: input.customer.email,
-      },
-      payment_methods: {
-        excluded_payment_types: getExcludedPaymentTypes(input.paymentMethod),
-        installments: 12,
-      },
-      back_urls: {
-        success: `${baseUrl}/checkout/retorno?status=success&order_id=${input.orderId}`,
-        pending: `${baseUrl}/checkout/retorno?status=pending&order_id=${input.orderId}`,
-        failure: `${baseUrl}/checkout/retorno?status=failure&order_id=${input.orderId}`,
-      },
-      auto_return: 'approved',
-      notification_url: `${baseUrl}/api/payments/webhook`,
-      statement_descriptor: 'INOVANERD',
-    },
-  })
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timeout = setTimeout(() => {
+        reject(new Error('O Mercado Pago demorou para responder.'))
+      }, MERCADO_PAGO_REQUEST_TIMEOUT_MS)
+    })
 
-  return response
+    const createPreferencePromise = preference.create({
+      body: {
+        external_reference: input.orderId,
+        items: input.items.map((item) => ({
+          ...item,
+          currency_id: 'BRL',
+        })),
+        payer: {
+          name: input.customer.nome,
+          email: input.customer.email,
+        },
+        payment_methods: {
+          excluded_payment_types: getExcludedPaymentTypes(input.paymentMethod),
+          installments: 12,
+        },
+        back_urls: {
+          success: `${baseUrl}/checkout/retorno?status=success&order_id=${input.orderId}`,
+          pending: `${baseUrl}/checkout/retorno?status=pending&order_id=${input.orderId}`,
+          failure: `${baseUrl}/checkout/retorno?status=failure&order_id=${input.orderId}`,
+        },
+        auto_return: 'approved',
+        ...(canUseWebhookUrl(baseUrl)
+          ? { notification_url: `${baseUrl}/api/payments/webhook` }
+          : {}),
+        statement_descriptor: 'INOVANERD',
+      },
+    })
+
+    return await Promise.race([createPreferencePromise, timeoutPromise])
+  } finally {
+    if (timeout) {
+      clearTimeout(timeout)
+    }
+  }
 }
 
 function parseSignatureHeader(signatureHeader: string | null) {

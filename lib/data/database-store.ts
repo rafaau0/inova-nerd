@@ -14,7 +14,7 @@ import type {
 } from '@/lib/types'
 
 type ProductRow = {
-  id: number
+  id: string | number
   name: string
   anime: string
   category: Product['category']
@@ -84,7 +84,7 @@ type OrderRow = {
 
 type OrderItemRow = {
   order_id: string
-  product_id: number
+  product_id: string | number
   product_name: string
   variant: string | null
   qty: number
@@ -126,7 +126,7 @@ function toJsonValue<T>(value: T) {
 
 function mapProduct(row: ProductRow): Product {
   return {
-    id: row.id,
+    id: toNumber(row.id),
     name: row.name,
     anime: row.anime,
     category: row.category,
@@ -192,7 +192,7 @@ function mapOrders(orderRows: OrderRow[], itemRows: OrderItemRow[]): OrderRecord
   for (const row of itemRows) {
     const current = itemsByOrder.get(row.order_id) || []
     current.push({
-      product_id: row.product_id,
+      product_id: toNumber(row.product_id),
       product_name: row.product_name,
       variant: row.variant,
       qty: row.qty,

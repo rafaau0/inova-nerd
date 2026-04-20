@@ -48,18 +48,31 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | null>(null)
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cart, setCart] = useState<CartItem[]>(() => loadCart())
+  const [cart, setCart] = useState<CartItem[]>([])
   const [coupon, setCoupon] = useState<Coupon | null>(null)
-  const [wishlist, setWishlist] = useState<number[]>(() => loadWishlist())
+  const [wishlist, setWishlist] = useState<number[]>([])
   const [shippingDestination, setShippingDestination] = useState<ShippingDestination | null>(null)
+  const [hasLoadedLocalState, setHasLoadedLocalState] = useState(false)
 
   useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setCart(loadCart())
+      setWishlist(loadWishlist())
+      setHasLoadedLocalState(true)
+    }, 0)
+
+    return () => window.clearTimeout(timeout)
+  }, [])
+
+  useEffect(() => {
+    if (!hasLoadedLocalState) return
     saveCart(cart)
-  }, [cart])
+  }, [cart, hasLoadedLocalState])
 
   useEffect(() => {
+    if (!hasLoadedLocalState) return
     saveWishlist(wishlist)
-  }, [wishlist])
+  }, [wishlist, hasLoadedLocalState])
 
   const addToCart = useCallback((product: Product, qty = 1, size: string | null = null) => {
     setCart((prev) => addToCartFn(prev, product, qty, size))

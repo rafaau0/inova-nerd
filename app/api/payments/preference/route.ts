@@ -40,6 +40,16 @@ export async function POST(request: Request) {
     const checkoutUrl =
       preference.init_point ?? preference.sandbox_init_point ?? null
 
+    if (!checkoutUrl) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'O Mercado Pago nao retornou a URL do checkout.',
+        },
+        { status: 502 }
+      )
+    }
+
     await updateOrderPayment(orderResult.order.id, {
       paymentProvider: 'mercado_pago',
       paymentReferenceId: preferenceId,

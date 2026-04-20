@@ -70,17 +70,6 @@ function maskCEP(value: string): string {
   return digits
 }
 
-function maskCard(value: string): string {
-  const digits = value.replace(/\D/g, '').slice(0, 16)
-  return digits.replace(/(\d{4})(?=\d)/g, '$1 ')
-}
-
-function maskValidity(value: string): string {
-  let digits = value.replace(/\D/g, '').slice(0, 4)
-  if (digits.length > 2) digits = digits.replace(/(\d{2})(\d+)/, '$1/$2')
-  return digits
-}
-
 const paymentOptions: Array<{
   icon: typeof CreditCard
   label: string
@@ -91,6 +80,8 @@ const paymentOptions: Array<{
   { icon: FileText, label: 'Boleto', value: 'boleto' },
   { icon: CreditCard, label: 'Debito', value: 'debit' },
 ]
+
+const CHECKOUT_REQUEST_TIMEOUT_MS = 20000
 
 export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { cart, coupon, totals, clearCart, setShippingDestination } = useCart()
@@ -120,46 +111,58 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     estado: '',
   })
 
-  const [card, setCard] = useState({
-    numero: '',
-    validade: '',
-    cvv: '',
-    nome: '',
-  })
-
   useEffect(() => {
     if (!isOpen) return
 
     let cancelled = false
+    const controller = new AbortController()
 
     const loadCurrentUser = async () => {
-      const response = await fetch('/api/auth/me', { cache: 'no-store' })
-      const result = (await response.json()) as { user: AuthUser | null }
-      if (cancelled) return
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          if (!cancelled) {
+            setCurrentUser(null)
+          }
+          return
+        }
 
-      setCurrentUser(result.user)
-      if (!result.user) return
+        const result = (await response.json()) as { user: AuthUser | null }
+        if (cancelled) return
 
-      setCustomer((prev) => ({
-        ...prev,
-        nome: prev.nome || result.user?.nome || '',
-        email: prev.email || result.user?.email || '',
-        cpf: prev.cpf || result.user?.cpf || '',
-        telefone: prev.telefone || result.user?.telefone || '',
-        cep: prev.cep || result.user?.cep || '',
-        endereco: prev.endereco || result.user?.endereco || '',
-        numero: prev.numero || result.user?.numero || '',
-        complemento: prev.complemento || result.user?.complemento || '',
-        bairro: prev.bairro || result.user?.bairro || '',
-        cidade: prev.cidade || result.user?.cidade || '',
-        estado: prev.estado || result.user?.estado || '',
-      }))
+        setCurrentUser(result.user)
+        if (!result.user) return
+
+        setCustomer((prev) => ({
+          ...prev,
+          nome: prev.nome || result.user?.nome || '',
+          email: prev.email || result.user?.email || '',
+          cpf: prev.cpf || result.user?.cpf || '',
+          telefone: prev.telefone || result.user?.telefone || '',
+          cep: prev.cep || result.user?.cep || '',
+          endereco: prev.endereco || result.user?.endereco || '',
+          numero: prev.numero || result.user?.numero || '',
+          complemento: prev.complemento || result.user?.complemento || '',
+          bairro: prev.bairro || result.user?.bairro || '',
+          cidade: prev.cidade || result.user?.cidade || '',
+          estado: prev.estado || result.user?.estado || '',
+        }))
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        if (!cancelled) {
+          setCurrentUser(null)
+        }
+      }
     }
 
     void loadCurrentUser()
 
     return () => {
       cancelled = true
+      controller.abort()
     }
   }, [isOpen])
 
@@ -173,12 +176,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setShippingTotals(null)
     setShippingQuote(null)
     setShippingDestination(null)
-    setCard({
-      numero: '',
-      validade: '',
-      cvv: '',
-      nome: '',
-    })
   }
 
   useEffect(() => {
@@ -368,28 +365,6 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     return true
   }
 
-  const validateStep2 = (): boolean => {
-    if (paymentMethod === 'pix' || paymentMethod === 'boleto') return true
-
-    if (!card.numero || card.numero.replace(/\s/g, '').length < 13) {
-      showToast('Numero do cartao invalido.', 'error')
-      return false
-    }
-    if (!/^\d{2}\/\d{2}$/.test(card.validade)) {
-      showToast('Validade invalida.', 'error')
-      return false
-    }
-    if (!card.cvv || card.cvv.length < 3) {
-      showToast('CVV invalido.', 'error')
-      return false
-    }
-    if (!card.nome || card.nome.length < 3) {
-      showToast('Informe o nome do titular.', 'error')
-      return false
-    }
-    return true
-  }
-
   const goToStep2 = () => {
     if (shippingLoading) {
       showToast('Aguarde a atualizacao do frete antes de continuar.', 'info')
@@ -407,9 +382,12 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   }
 
   const finalizePurchase = async () => {
-    if (!validateStep2()) return
-
     setIsProcessing(true)
+    const controller = new AbortController()
+    const timeout = window.setTimeout(
+      () => controller.abort(),
+      CHECKOUT_REQUEST_TIMEOUT_MS
+    )
 
     try {
       const response = await fetch('/api/payments/preference', {
@@ -417,6 +395,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
         body: JSON.stringify({
           items: cart.map((item) => ({
             product_id: item.id,
@@ -449,9 +428,14 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
       window.location.href = result.init_point
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Nao foi possivel concluir o pedido.'
+        error instanceof DOMException && error.name === 'AbortError'
+          ? 'O Mercado Pago demorou para responder. Tente novamente em instantes.'
+          : error instanceof Error
+            ? error.message
+            : 'Nao foi possivel concluir o pedido.'
       showToast(message, 'error')
     } finally {
+      window.clearTimeout(timeout)
       setIsProcessing(false)
     }
   }
@@ -678,68 +662,10 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 })}
               </div>
 
-              {(paymentMethod === 'credit_card' || paymentMethod === 'debit') && (
-                <>
-                  <div>
-                    <label className="text-sm font-medium text-foreground">Numero do cartao</label>
-                    <input
-                      type="text"
-                      value={card.numero}
-                      onChange={(event) =>
-                        setCard({ ...card, numero: maskCard(event.target.value) })
-                      }
-                      placeholder="0000 0000 0000 0000"
-                      maxLength={19}
-                      className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
-                    />
-                  </div>
+              <div className="rounded-xl border border-border bg-muted p-4 text-sm text-muted-foreground">
+                Os dados de pagamento serao preenchidos com seguranca no Mercado Pago.
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium text-foreground">Validade</label>
-                      <input
-                        type="text"
-                        value={card.validade}
-                        onChange={(event) =>
-                          setCard({ ...card, validade: maskValidity(event.target.value) })
-                        }
-                        placeholder="MM/AA"
-                        maxLength={5}
-                        className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-foreground">CVV</label>
-                      <input
-                        type="text"
-                        value={card.cvv}
-                        onChange={(event) =>
-                          setCard({
-                            ...card,
-                            cvv: event.target.value.replace(/\D/g, '').slice(0, 3),
-                          })
-                        }
-                        placeholder="000"
-                        maxLength={3}
-                        className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-foreground">Nome no cartao</label>
-                    <input
-                      type="text"
-                      value={card.nome}
-                      onChange={(event) =>
-                        setCard({ ...card, nome: event.target.value.toUpperCase() })
-                      }
-                      placeholder="Como aparece no cartao"
-                      className="w-full mt-1 px-3 py-2 bg-muted border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:border-orange focus:outline-none"
-                    />
-                  </div>
-                </>
-              )}
 
               <div className="bg-muted border border-border rounded-xl p-4 my-5">
                 <div className="flex justify-between text-sm mb-2">

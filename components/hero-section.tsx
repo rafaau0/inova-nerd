@@ -29,14 +29,45 @@ interface Particle {
   animationDelay: string
 }
 
-const particles: Particle[] = Array.from({ length: 30 }).map((_, i) => ({
-  id: i,
-  left: `${Math.random() * 100}%`,
-  width: `${2 + Math.random() * 3}px`,
-  height: `${2 + Math.random() * 3}px`,
-  background: Math.random() > 0.5 ? '#F59E0B' : '#6B42B8',
-  animationDuration: `${4 + Math.random() * 6}s`,
-  animationDelay: `${Math.random() * 8}s`,
+const particles: Particle[] = [
+  [6, 2.7, 3.1, '#F59E0B', 6.4, 0.2],
+  [13, 4.1, 2.8, '#6B42B8', 8.7, 1.5],
+  [19, 3.4, 4.6, '#F59E0B', 5.2, 3.1],
+  [24, 2.2, 2.9, '#6B42B8', 9.1, 4.8],
+  [31, 4.7, 3.3, '#F59E0B', 7.6, 2.4],
+  [38, 3.1, 2.4, '#6B42B8', 4.8, 6.3],
+  [43, 2.8, 4.2, '#F59E0B', 9.7, 1.1],
+  [49, 4.3, 3.8, '#6B42B8', 6.9, 5.6],
+  [56, 3.6, 2.6, '#F59E0B', 8.2, 3.7],
+  [62, 2.5, 4.8, '#6B42B8', 5.8, 7.2],
+  [69, 4.6, 3.0, '#F59E0B', 7.1, 0.7],
+  [74, 3.2, 2.2, '#6B42B8', 9.4, 4.1],
+  [81, 2.9, 4.4, '#F59E0B', 6.1, 2.9],
+  [87, 4.0, 3.5, '#6B42B8', 8.9, 6.7],
+  [94, 3.7, 2.7, '#F59E0B', 5.5, 1.9],
+  [3, 2.4, 4.1, '#6B42B8', 7.8, 5.1],
+  [16, 4.4, 2.5, '#F59E0B', 6.6, 3.4],
+  [28, 3.0, 4.7, '#6B42B8', 9.9, 0.9],
+  [35, 2.6, 3.6, '#F59E0B', 4.6, 6.0],
+  [52, 4.8, 2.3, '#6B42B8', 8.4, 2.2],
+  [58, 3.3, 4.0, '#F59E0B', 7.3, 4.5],
+  [66, 2.1, 3.2, '#6B42B8', 5.1, 7.6],
+  [72, 4.2, 4.9, '#F59E0B', 9.3, 1.3],
+  [79, 3.5, 2.1, '#6B42B8', 6.8, 5.8],
+  [85, 2.8, 3.9, '#F59E0B', 8.0, 3.0],
+  [91, 4.5, 2.6, '#6B42B8', 5.9, 6.9],
+  [10, 3.8, 4.3, '#F59E0B', 7.5, 0.4],
+  [22, 2.3, 3.4, '#6B42B8', 9.6, 4.9],
+  [46, 4.9, 2.8, '#F59E0B', 6.3, 2.7],
+  [97, 3.1, 4.5, '#6B42B8', 8.6, 7.4],
+].map(([left, width, height, background, duration, delay], id) => ({
+  id,
+  left: `${left}%`,
+  width: `${width}px`,
+  height: `${height}px`,
+  background: String(background),
+  animationDuration: `${duration}s`,
+  animationDelay: `${delay}s`,
 }))
 
 export function HeroSection() {

@@ -27,22 +27,38 @@ export function Navbar() {
   }, [])
 
   useEffect(() => {
-    const loadUser = async () => {
-      const response = await fetch('/api/auth/me', { cache: 'no-store' })
-      const result = (await response.json()) as { user: AuthUser | null }
-      setCurrentUser(result.user)
+    const controller = new AbortController()
+
+    const loadUser = async (signal?: AbortSignal) => {
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          signal,
+        })
+        if (!response.ok) {
+          setCurrentUser(null)
+          return
+        }
+
+        const result = (await response.json()) as { user: AuthUser | null }
+        setCurrentUser(result.user)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setCurrentUser(null)
+      }
     }
 
     const syncUser = () => {
       void loadUser()
     }
 
-    void loadUser()
+    void loadUser(controller.signal)
 
     window.addEventListener('focus', syncUser)
     document.addEventListener('visibilitychange', syncUser)
 
     return () => {
+      controller.abort()
       window.removeEventListener('focus', syncUser)
       document.removeEventListener('visibilitychange', syncUser)
     }

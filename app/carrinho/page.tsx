@@ -28,13 +28,32 @@ export default function CartPage() {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null)
 
   useEffect(() => {
+    const controller = new AbortController()
+
     const loadUser = async () => {
-      const response = await fetch('/api/auth/me', { cache: 'no-store' })
-      const result = (await response.json()) as { user: AuthUser | null }
-      setCurrentUser(result.user)
+      try {
+        const response = await fetch('/api/auth/me', {
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+        if (!response.ok) {
+          setCurrentUser(null)
+          return
+        }
+
+        const result = (await response.json()) as { user: AuthUser | null }
+        setCurrentUser(result.user)
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return
+        setCurrentUser(null)
+      }
     }
 
     void loadUser()
+
+    return () => {
+      controller.abort()
+    }
   }, [])
 
   const handleApplyCoupon = async () => {
