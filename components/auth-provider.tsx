@@ -52,7 +52,6 @@ export function AuthProvider({
       return result.user
     } catch {
       if (requestId !== requestIdRef.current) return null
-      setUser(null)
       return null
     } finally {
       if (requestId === requestIdRef.current) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { track } from '@vercel/analytics'
 import { CreditCard, FileText, QrCode, X } from 'lucide-react'
 import { useCart } from './cart-provider'
@@ -8,6 +8,7 @@ import { useToast } from './toast-provider'
 import { useAuth } from './auth-provider'
 import { hasResolvedShippingDestination, isCatalaoGoias } from '@/lib/shipping'
 import type {
+  AuthUser,
   CartTotals,
   CustomerInfo,
   PaymentMethod,
@@ -95,7 +96,9 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [isLoadingShipping, setIsLoadingShipping] = useState(false)
   const [shippingTotals, setShippingTotals] = useState<CartTotals | null>(null)
   const [shippingQuote, setShippingQuote] = useState<ShippingQuote | null>(null)
+  const [checkoutUser, setCheckoutUser] = useState<AuthUser | null>(null)
   const modalRef = useRef<HTMLDivElement>(null)
+  const activeUser = checkoutUser ?? currentUser
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     nome: '',
@@ -110,31 +113,60 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     cidade: '',
     estado: '',
   })
+  const hasShippingDestination = hasResolvedShippingDestination(customer)
+
+  const checkoutItems = useMemo(
+    () =>
+      cart.map((item) => ({
+        product_id: item.id,
+        variant: item.size,
+        qty: item.qty,
+        price: item.price,
+      })),
+    [cart]
+  )
 
   useEffect(() => {
-    if (!isOpen || !currentUser) return
-
     const timeout = window.setTimeout(() => {
-      setCustomer((prev) => ({
-        ...prev,
-        nome: prev.nome || currentUser.nome || '',
-        email: prev.email || currentUser.email || '',
-        cpf: prev.cpf || currentUser.cpf || '',
-        telefone: prev.telefone || currentUser.telefone || '',
-        cep: prev.cep || currentUser.cep || '',
-        endereco: prev.endereco || currentUser.endereco || '',
-        numero: prev.numero || currentUser.numero || '',
-        complemento: prev.complemento || currentUser.complemento || '',
-        bairro: prev.bairro || currentUser.bairro || '',
-        cidade: prev.cidade || currentUser.cidade || '',
-        estado: prev.estado || currentUser.estado || '',
-      }))
+      if (!isOpen) {
+        setCheckoutUser(null)
+        return
+      }
+
+      if (currentUser) {
+        setCheckoutUser(currentUser)
+      }
     }, 0)
 
     return () => {
       window.clearTimeout(timeout)
     }
   }, [isOpen, currentUser])
+
+  useEffect(() => {
+    if (!isOpen || !activeUser) return
+
+    const timeout = window.setTimeout(() => {
+      setCustomer((prev) => ({
+        ...prev,
+        nome: prev.nome || activeUser.nome || '',
+        email: prev.email || activeUser.email || '',
+        cpf: prev.cpf || activeUser.cpf || '',
+        telefone: prev.telefone || activeUser.telefone || '',
+        cep: prev.cep || activeUser.cep || '',
+        endereco: prev.endereco || activeUser.endereco || '',
+        numero: prev.numero || activeUser.numero || '',
+        complemento: prev.complemento || activeUser.complemento || '',
+        bairro: prev.bairro || activeUser.bairro || '',
+        cidade: prev.cidade || activeUser.cidade || '',
+        estado: prev.estado || activeUser.estado || '',
+      }))
+    }, 0)
+
+    return () => {
+      window.clearTimeout(timeout)
+    }
+  }, [isOpen, activeUser])
 
   const resetState = () => {
     setStep(1)
@@ -145,6 +177,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     setIsLoadingShipping(false)
     setShippingTotals(null)
     setShippingQuote(null)
+    setCheckoutUser(null)
     setShippingDestination(null)
   }
 
@@ -221,7 +254,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   }, [customer.cidade, customer.estado, customer.cep, setShippingDestination])
 
   useEffect(() => {
-    if (!isOpen || !hasResolvedShippingDestination(customer) || cart.length === 0) {
+    if (!isOpen || !hasShippingDestination || checkoutItems.length === 0) {
       return
     }
 
@@ -237,12 +270,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            items: cart.map((item) => ({
-              product_id: item.id,
-              variant: item.size,
-              qty: item.qty,
-              price: item.price,
-            })),
+            items: checkoutItems,
             coupon: coupon?.code || null,
             destination: {
               cep: customer.cep,
@@ -286,10 +314,19 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     return () => {
       cancelled = true
     }
-  }, [isOpen, customer, cart, coupon, totals.frete])
+  }, [
+    isOpen,
+    checkoutItems,
+    coupon?.code,
+    customer.cep,
+    customer.cidade,
+    customer.estado,
+    hasShippingDestination,
+    totals.frete,
+  ])
 
   const shouldUseRealtimeShipping =
-    isOpen && hasResolvedShippingDestination(customer) && cart.length > 0
+    isOpen && hasShippingDestination && checkoutItems.length > 0
   const shippingLoading = shouldUseRealtimeShipping && isLoadingShipping
   const effectiveTotals =
     shouldUseRealtimeShipping ? shippingTotals ?? totals : totals
@@ -367,12 +404,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
         },
         signal: controller.signal,
         body: JSON.stringify({
-          items: cart.map((item) => ({
-            product_id: item.id,
-            variant: item.size,
-            qty: item.qty,
-            price: item.price,
-          })),
+          items: checkoutItems,
           coupon: coupon?.code || null,
           totals: effectiveTotals,
           customer,
@@ -412,7 +444,7 @@ export function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
   if (!isOpen) return null
 
-  if (!currentUser) return null
+  if (!activeUser) return null
 
   return (
     <div
