@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
@@ -23,24 +24,41 @@ const AuthContext = createContext<AuthContextType | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const requestIdRef = useRef(0)
 
   const refreshUser = useCallback(async () => {
+    const requestId = requestIdRef.current + 1
+    requestIdRef.current = requestId
+
     try {
       const response = await fetch('/api/auth/me', { cache: 'no-store' })
+      if (requestId !== requestIdRef.current) return null
+
       if (!response.ok) {
         setUser(null)
         return null
       }
 
       const result = (await response.json()) as { user: AuthUser | null }
+      if (requestId !== requestIdRef.current) return result.user
+
       setUser(result.user)
       return result.user
     } catch {
+      if (requestId !== requestIdRef.current) return null
       setUser(null)
       return null
     } finally {
-      setIsLoading(false)
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false)
+      }
     }
+  }, [])
+
+  const updateUser = useCallback((nextUser: AuthUser | null) => {
+    requestIdRef.current += 1
+    setUser(nextUser)
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
@@ -73,9 +91,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       isLoading,
       refreshUser,
-      setUser,
+      setUser: updateUser,
     }),
-    [user, isLoading, refreshUser]
+    [user, isLoading, refreshUser, updateUser]
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

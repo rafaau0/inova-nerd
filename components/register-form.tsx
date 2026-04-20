@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useAuth } from './auth-provider'
+import type { AuthUser } from '@/lib/types'
 
 interface RegisterFormProps {
   redirectTo?: string
@@ -23,6 +25,7 @@ interface CepLookupResponse {
 
 export function RegisterForm({ redirectTo = '/minha-conta' }: RegisterFormProps) {
   const router = useRouter()
+  const { setUser, refreshUser } = useAuth()
   const [form, setForm] = useState({
     nome: '',
     email: '',
@@ -101,9 +104,19 @@ export function RegisterForm({ redirectTo = '/minha-conta' }: RegisterFormProps)
         body: JSON.stringify(form),
       })
 
-      const result = (await response.json()) as { success: boolean; error?: string }
+      const result = (await response.json()) as {
+        success: boolean
+        error?: string
+        user?: AuthUser
+      }
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Nao foi possivel criar a conta.')
+      }
+
+      if (result.user) {
+        setUser(result.user)
+      } else {
+        await refreshUser()
       }
 
       router.push(redirectTo)

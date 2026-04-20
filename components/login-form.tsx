@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { useAuth } from './auth-provider'
+import type { AuthUser } from '@/lib/types'
 
 interface LoginFormProps {
   redirectTo?: string
@@ -10,6 +12,7 @@ interface LoginFormProps {
 
 export function LoginForm({ redirectTo = '/minha-conta' }: LoginFormProps) {
   const router = useRouter()
+  const { setUser, refreshUser } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -29,9 +32,19 @@ export function LoginForm({ redirectTo = '/minha-conta' }: LoginFormProps) {
         body: JSON.stringify({ email, password }),
       })
 
-      const result = (await response.json()) as { success: boolean; error?: string }
+      const result = (await response.json()) as {
+        success: boolean
+        error?: string
+        user?: AuthUser
+      }
       if (!response.ok || !result.success) {
         throw new Error(result.error || 'Nao foi possivel entrar.')
+      }
+
+      if (result.user) {
+        setUser(result.user)
+      } else {
+        await refreshUser()
       }
 
       router.push(redirectTo)
