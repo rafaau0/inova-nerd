@@ -15,47 +15,47 @@ export default async function HomePage() {
     <main>
       <HeroSection />
 
-      <section className="bg-card border-y border-border py-7">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <section className="bg-card border-y border-border py-5 md:py-7">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
             <Link
               href="/catalogo?categoria=camisetas"
-              className="group flex items-center gap-4 px-6 py-5 bg-muted border border-border rounded-xl transition-all hover:border-orange hover:-translate-y-0.5"
+              className="group flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 bg-muted border border-border rounded-xl transition-all hover:border-orange hover:-translate-y-0.5"
             >
-              <Shirt className="w-8 h-8 text-orange" />
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">Camisetas</h3>
-                <p className="text-sm text-muted-foreground">Exclusivas e originais</p>
+              <Shirt className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 text-orange" />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-foreground">Camisetas</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">Exclusivas e originais</p>
               </div>
-              <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all">
+              <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all flex-shrink-0">
                 →
               </span>
             </Link>
 
             <Link
               href="/catalogo?categoria=bonecos"
-              className="group flex items-center gap-4 px-6 py-5 bg-muted border border-border rounded-xl transition-all hover:border-orange hover:-translate-y-0.5"
+              className="group flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 bg-muted border border-border rounded-xl transition-all hover:border-orange hover:-translate-y-0.5"
             >
-              <Trophy className="w-8 h-8 text-orange" />
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">Bonecos colecionaveis</h3>
-                <p className="text-sm text-muted-foreground">Edicoes limitadas</p>
+              <Trophy className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 text-orange" />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-foreground">Bonecos colecionaveis</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">Edicoes limitadas</p>
               </div>
-              <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all">
+              <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all flex-shrink-0">
                 →
               </span>
             </Link>
 
             <Link
               href="/catalogo"
-              className="group flex items-center gap-4 px-6 py-5 bg-muted border border-border rounded-xl transition-all hover:border-orange hover:-translate-y-0.5"
+              className="group flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-4 sm:py-5 bg-muted border border-border rounded-xl transition-all hover:border-orange hover:-translate-y-0.5"
             >
-              <Star className="w-8 h-8 text-orange" />
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">Ver tudo</h3>
-                <p className="text-sm text-muted-foreground">Catalogo completo</p>
+              <Star className="w-7 h-7 sm:w-8 sm:h-8 flex-shrink-0 text-orange" />
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-sm sm:text-base text-foreground">Ver tudo</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground">Catalogo completo</p>
               </div>
-              <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all">
+              <span className="text-muted-foreground group-hover:text-orange group-hover:translate-x-1 transition-all flex-shrink-0">
                 →
               </span>
             </Link>
@@ -63,21 +63,21 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 px-6">
+      <section className="py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <span className="inline-block bg-orange/15 border border-orange/40 text-orange px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase mb-4">
+          <div className="text-center mb-8 md:mb-12 lg:mb-14">
+            <span className="inline-block bg-orange/15 border border-orange/40 text-orange px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide uppercase mb-3 md:mb-4">
               Em destaque
             </span>
-            <h2 className="font-display text-[clamp(2rem,4vw,3rem)] tracking-wide text-foreground mb-3">
+            <h2 className="font-display text-[clamp(1.5rem,5vw,3rem)] tracking-wide text-foreground mb-2 md:mb-3">
               NOVIDADES DA SEMANA
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
               Os lancamentos que estao bombando no universo otaku.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
             {featured.map((product, index) => (
               <ProductCard key={product.id} product={product} delay={index * 0.1} />
             ))}
@@ -85,30 +85,30 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="bestsellers" className="py-20 px-6 bg-muted">
+      <section id="bestsellers" className="py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-6 bg-muted">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-14">
-            <span className="inline-block bg-orange/15 border border-orange/40 text-orange px-4 py-1 rounded-full text-sm font-semibold tracking-wide uppercase mb-4">
+          <div className="text-center mb-8 md:mb-12 lg:mb-14">
+            <span className="inline-block bg-orange/15 border border-orange/40 text-orange px-3 sm:px-4 py-1 rounded-full text-xs sm:text-sm font-semibold tracking-wide uppercase mb-3 md:mb-4">
               Hot
             </span>
-            <h2 className="font-display text-[clamp(2rem,4vw,3rem)] tracking-wide text-foreground mb-3">
+            <h2 className="font-display text-[clamp(1.5rem,5vw,3rem)] tracking-wide text-foreground mb-2 md:mb-3">
               MAIS VENDIDOS
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
+            <p className="text-xs sm:text-sm md:text-base text-muted-foreground max-w-lg mx-auto">
               Os favoritos da nossa comunidade.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
             {bestsellers.map((product, index) => (
               <ProductCard key={product.id} product={product} delay={index * 0.1} />
             ))}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-10 md:mt-12">
             <Link
               href="/catalogo"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl font-bold bg-gradient-to-br from-orange to-orange-dark text-background shadow-[0_8px_32px_rgba(245,158,11,0.35)] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(245,158,11,0.55)] transition-all"
+              className="inline-flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl text-sm sm:text-base font-bold bg-gradient-to-br from-orange to-orange-dark text-background shadow-[0_8px_32px_rgba(245,158,11,0.35)] hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(245,158,11,0.55)] transition-all"
             >
               Ver catalogo completo
             </Link>
@@ -116,31 +116,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="relative py-16 px-6 bg-purple-dark overflow-hidden">
+      <section className="relative py-10 md:py-14 lg:py-16 px-4 sm:px-6 lg:px-6 bg-purple-dark overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_0%_50%,rgba(245,158,11,0.2)_0%,transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_100%_50%,rgba(75,46,131,0.5)_0%,transparent_60%)]" />
 
-        <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
+        <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
           <div>
-            <h2 className="font-display text-[clamp(1.6rem,3vw,2.4rem)] text-white tracking-wide mb-2">
+            <h2 className="font-display text-[clamp(1.3rem,4vw,2.4rem)] text-white tracking-wide mb-1.5 md:mb-2">
               FRETE GRATIS <span className="text-orange">ACIMA DE R$ 199</span>
             </h2>
-            <p className="text-white/70">
+            <p className="text-xs sm:text-sm md:text-base text-white/70">
               Entregamos para todo o Brasil com embalagem especial para colecionaveis.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-white font-bold text-sm">
-              <Truck className="w-5 h-5" />
+          <div className="flex flex-wrap gap-2 sm:gap-3 md:gap-4">
+            <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 rounded-lg md:rounded-xl text-white font-bold text-xs sm:text-sm">
+              <Truck className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               Frete gratis
             </div>
-            <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-white font-bold text-sm">
-              <Shield className="w-5 h-5" />
+            <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 rounded-lg md:rounded-xl text-white font-bold text-xs sm:text-sm">
+              <Shield className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               Compra segura
             </div>
-            <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-5 py-3 rounded-xl text-white font-bold text-sm">
-              <RefreshCw className="w-5 h-5" />
+            <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 md:py-3 rounded-lg md:rounded-xl text-white font-bold text-xs sm:text-sm">
+              <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
               Troca facil
             </div>
           </div>
